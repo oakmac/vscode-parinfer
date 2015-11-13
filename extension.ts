@@ -1,18 +1,39 @@
-import { Range, Position, TextEditor, ExtensionContext, commands, window } from 'vscode'; 
+import {
+	Range, Position, TextEditor, ExtensionContext,
+	commands, window, StatusBarAlignment,
+	TextEditorSelectionChangeEvent 
+} from 'vscode'; 
 import { indentMode, parenMode, IPosition } from './parinfer';
 
 function fromEditorPosition(editorPosition: Position): IPosition {
 	return { row: editorPosition.line, column: editorPosition.character }; 
 }
 
+enum Mode {
+	Paren,
+	Indent
+}
+
 export function activate(context: ExtensionContext) {
-	console.log('activated!');
+	let mode: Mode = Mode.Paren;
 	
-	function parinfer() {
-		const editor = window.activeTextEditor;
+	const statusBarItem = window.createStatusBarItem(StatusBarAlignment.Right);
+	statusBarItem.show();
+	
+	function render() {
+		statusBarItem.text = mode === Mode.Paren ? 'Paren' : 'Indent';
+	}
+
+	function toggleMode() {
+		mode = mode === Mode.Paren ? Mode.Indent : Mode.Paren;
+		render();
+	}
+	
+	function parinfer(editor: TextEditor) {
 		const document = editor.document;
 		const input = document.getText();
-		const output = indentMode(input, fromEditorPosition(editor.selection.active));
+		const fn = mode === Mode.Paren ? parenMode : indentMode;
+		const output = fn(input, fromEditorPosition(editor.selection.active));
 		
 		if (typeof output !== 'string') {
 			console.log('got from parinfer:', output);
@@ -23,17 +44,19 @@ export function activate(context: ExtensionContext) {
 		editor.edit(builder => builder.replace(range, output));
 		console.log('success');
 	}
-
-	var disposable = commands.registerCommand('extension.sayHello', parinfer);
 	
-	window.onDidChangeTextEditorSelection(e => {
-		const document = e.textEditor.document;
-		if (!/\.clj$/.test(document.fileName)) {
+	function onSelectionChange(e: TextEditorSelectionChangeEvent) {
+		if (!/\.clj$/.test(e.textEditor.document.fileName)) {
 			return;
 		}
 		
-		parinfer();
-	}, context.subscriptions);
+		parinfer(e.textEditor);
+	}
 	
-	// window.onDidChangeActiveTextEditor(onEditor, context.subscriptions);
+	context.subscriptions.push(
+		commands.registerCommand('parinfer.toggleMode', toggleMode),
+		window.onDidChangeTextEditorSelection(onSelectionChange)
+	);
+	
+	render();
 }

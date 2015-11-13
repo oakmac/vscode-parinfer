@@ -10,18 +10,17 @@
 		"Others"
 	],
 	"activationEvents": [
-		"onLanguage:clojure",
-		"onCommand:extension.sayHello"
+		"onLanguage:clojure"
 	],
 	"main": "./out/extension",
 	"contributes": {
 		"keybindings": [{
-			"command": "extension.sayHello",
+			"command": "parinfer.toggleMode",
 			"key": "Ctrl+R"
 		}],
 		"commands": [{
-			"command": "extension.sayHello",
-			"title": "Hello World"
+			"command": "parinfer.toggleMode",
+			"title": "Toggle Parinfer Mode"
 		}]
 	},
 	"scripts": {
