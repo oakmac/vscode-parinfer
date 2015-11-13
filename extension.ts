@@ -31,25 +31,28 @@ function shouldRun(fileName: string): boolean {
 }
 
 export function activate(context: ExtensionContext) {
-	let mode: Mode = Mode.Paren;
+	let modes: { [uri: string]: Mode; } = Object.create(null);
 	
 	const statusBarItem = window.createStatusBarItem(StatusBarAlignment.Right);
 	statusBarItem.show();
 	
-	function render() {
-		statusBarItem.text = mode === Mode.Paren ? 'Paren' : 'Indent';
+	function render(editor: TextEditor) {
+		const uri = editor.document.uri.toString();
+		statusBarItem.text = modes[uri] === Mode.Indent ? 'Indent' : 'Paren';
 	}
 
 	function toggleMode() {
-		mode = mode === Mode.Paren ? Mode.Indent : Mode.Paren;
-		render();
+		const uri = window.activeTextEditor.document.uri.toString();
+		modes[uri] = modes[uri] === Mode.Indent ? Mode.Paren : Mode.Indent;
+		render(window.activeTextEditor);
 	}
 	
 	function parinfer(editor: TextEditor, position: Position = null) {
 		const document = editor.document;
+		const uri = document.uri.toString();
 		const input = document.getText();
-		const fn = (mode === Mode.Paren || !position) ? parenMode : indentMode;
-		const output = fn(input, fromEditorPosition(position));
+		const fn = (modes[uri] === Mode.Paren || !position) ? parenMode : indentMode;
+		const output = position ? fn(input, fromEditorPosition(position)) : fn(input);
 		
 		if (typeof output !== 'string') {
 			console.log('got from parinfer:', output);
@@ -77,6 +80,7 @@ export function activate(context: ExtensionContext) {
 		}
 		
 		parinfer(editor);
+		render(editor);
 	}
 	
 	context.subscriptions.push(
@@ -85,5 +89,5 @@ export function activate(context: ExtensionContext) {
 		window.onDidChangeActiveTextEditor(onEditorChange)
 	);
 	
-	render();
+	render(window.activeTextEditor);
 }
