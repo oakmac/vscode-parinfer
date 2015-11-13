@@ -5,13 +5,21 @@ import {
 } from 'vscode'; 
 import { indentMode, parenMode, IPosition } from './parinfer';
 
-function fromEditorPosition(editorPosition: Position): IPosition {
-	return { row: editorPosition.line, column: editorPosition.character }; 
-}
-
 enum Mode {
 	Paren,
 	Indent
+}
+
+function debounce(fn: (...args: any[]) => void, delay: number): (...args: any[])=>void {
+	let timer;
+	return (...args: any[]) => {
+		clearTimeout(timer);
+		timer = setTimeout(() => fn(...args), delay);
+	};
+}
+
+function fromEditorPosition(editorPosition: Position): IPosition {
+	return { row: editorPosition.line, column: editorPosition.character }; 
 }
 
 export function activate(context: ExtensionContext) {
@@ -45,12 +53,14 @@ export function activate(context: ExtensionContext) {
 		console.log('success');
 	}
 	
+	const eventuallyParinfer = debounce(parinfer, 50);
+	
 	function onSelectionChange(e: TextEditorSelectionChangeEvent) {
 		if (!/\.clj$/.test(e.textEditor.document.fileName)) {
 			return;
 		}
 		
-		parinfer(e.textEditor);
+		eventuallyParinfer(e.textEditor);
 	}
 	
 	context.subscriptions.push(
