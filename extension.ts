@@ -10,9 +10,9 @@ enum Mode {
 	Indent
 }
 
-function debounce(fn: (...args: any[]) => void, delay: number): (...args: any[])=>void {
+function debounce(fn: (...args) => void, delay: number): (...args)=>void {
 	let timer;
-	return (...args: any[]) => {
+	return (...args) => {
 		clearTimeout(timer);
 		timer = setTimeout(() => fn(...args), delay);
 	};
