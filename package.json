@@ -10,10 +10,15 @@
 		"Others"
 	],
 	"activationEvents": [
+		"onLanguage:clojure",
 		"onCommand:extension.sayHello"
 	],
 	"main": "./out/extension",
 	"contributes": {
+		"keybindings": [{
+			"command": "extension.sayHello",
+			"key": "Ctrl+R"
+		}],
 		"commands": [{
 			"command": "extension.sayHello",
 			"title": "Hello World"
