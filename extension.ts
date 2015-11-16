@@ -51,7 +51,7 @@ export function activate(context: ExtensionContext) {
 		const document = editor.document;
 		const uri = document.uri.toString();
 		const input = document.getText();
-		const fn = (modes[uri] === Mode.Paren || !position) ? parenMode : indentMode;
+		const fn = (modes[uri] === Mode.Indent && position) ? indentMode : parenMode;
 		const output = position ? fn(input, fromEditorPosition(position)) : fn(input);
 		
 		if (typeof output !== 'string') {
@@ -61,7 +61,6 @@ export function activate(context: ExtensionContext) {
 		
 		const range = new Range(new Position(0, 0), document.positionAt(input.length));
 		editor.edit(builder => builder.replace(range, output));
-		console.log('success');
 	}
 	
 	const eventuallyParinfer = debounce(parinfer, 50);
