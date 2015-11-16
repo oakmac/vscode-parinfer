@@ -10,7 +10,7 @@
 	"activationEvents": [
 		"onLanguage:clojure"
 	],
-	"main": "./out/extension",
+	"main": "./extension",
 	"contributes": {
 		"keybindings": [{
 			"command": "parinfer.toggleMode",
