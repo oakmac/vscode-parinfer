@@ -3,12 +3,10 @@
 	"description": "Parinfer for VS Code",
 	"version": "0.0.1",
 	"publisher": "joaomoreno",
+	"icon": "icon.png",
 	"engines": {
 		"vscode": "0.10.x"
 	},
-	"categories": [
-		"Others"
-	],
 	"activationEvents": [
 		"onLanguage:clojure"
 	],
