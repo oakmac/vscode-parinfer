@@ -45,6 +45,11 @@ export function activate(context: ExtensionContext) {
 	function render(editor: TextEditor) {
 		const uri = editor.document.uri.toString();
 
+		if (!shouldRun(editor.document.fileName)) {
+			statusBarItem.hide();
+			return;
+		}
+
 		if (!enabled) {
 			statusBarItem.text = '$(code)';
 			statusBarItem.color = '#ccc';
@@ -55,6 +60,8 @@ export function activate(context: ExtensionContext) {
 			statusBarItem.color = 'white';
 			statusBarItem.tooltip = `Parinfer is in ${ mode } mode`;
 		}
+
+		statusBarItem.show();
 	}
 
 	function toggleMode() {
@@ -109,7 +116,12 @@ export function activate(context: ExtensionContext) {
 	}
 
 	function onEditorChange(editor: TextEditor) {
-		if (!enabled || !shouldRun(editor.document.fileName)) {
+		if (!shouldRun(editor.document.fileName)) {
+			render(editor);
+			return;
+		}
+
+		if (!enabled) {
 			return;
 		}
 
