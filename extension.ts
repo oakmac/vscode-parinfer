@@ -27,7 +27,7 @@ function fromEditorPosition(editorPosition: Position): IPosition {
 }
 
 function shouldRun(fileName: string): boolean {
-	return /\.clj$/.test(fileName);
+	return /\.cljs?$/.test(fileName);
 }
 
 export function activate(context: ExtensionContext) {
