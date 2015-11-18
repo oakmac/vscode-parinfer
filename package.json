@@ -14,11 +14,22 @@
 	"contributes": {
 		"keybindings": [{
 			"command": "parinfer.toggleMode",
-			"key": "Ctrl+R"
+			"key": "Ctrl+8",
+			"mac": "Cmd+8"
+		},{
+			"command": "parinfer.toggleEnablement",
+			"key": "Ctrl+9",
+			"mac": "Cmd+9"
 		}],
 		"commands": [{
 			"command": "parinfer.toggleMode",
-			"title": "Toggle Parinfer Mode"
+			"title": "Parinfer: Toggle Mode"
+		}, {
+			"command": "parinfer.toggleEnablement",
+			"title": "Parinfer: Toggle Enablement"
+		}, {
+			"command": "parinfer.switchState",
+			"title": "Parinfer: Switch State"
 		}]
 	},
 	"scripts": {
