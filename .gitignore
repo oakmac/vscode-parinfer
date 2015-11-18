@@ -1,3 +1,4 @@
 node_modules
 extension.js
 *.map
+npm-debug.log
