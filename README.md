@@ -1,5 +1,5 @@
 # vscode-parinfer
 
-![vscode-parinfer logo](icon.png)
+[![vscode-parinfer logo](icon.png)](http://shaunlebron.github.io/parinfer/)
 
-This extension brings in [Parinfer](http://shaunlebron.github.io/parinfer/)'s functionality to [VS Code](https://code.visualstudio.com).
+[Parinfer](http://shaunlebron.github.io/parinfer/) for [VS Code](https://code.visualstudio.com)!

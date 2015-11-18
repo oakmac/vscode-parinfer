@@ -1,11 +1,16 @@
 {
 	"name": "vscode-parinfer",
+	"displayName": "Parinfer",
 	"description": "Parinfer for VS Code",
 	"version": "0.0.1",
 	"publisher": "joaomoreno",
 	"icon": "icon.png",
 	"engines": {
 		"vscode": "0.10.x"
+	},
+	"repository": {
+		"type": "git",
+		"url": "https://github.com/Microsoft/vscode-parinfer"
 	},
 	"activationEvents": [
 		"onLanguage:clojure"
