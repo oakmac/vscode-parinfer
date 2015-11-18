@@ -1,49 +1,56 @@
 {
-	"name": "vscode-parinfer",
-	"displayName": "Parinfer",
-	"description": "Parinfer for VS Code",
-	"version": "0.0.1",
-	"publisher": "joaomoreno",
-	"icon": "icon.png",
-	"engines": {
-		"vscode": "0.10.x"
-	},
-	"repository": {
-		"type": "git",
-		"url": "https://github.com/Microsoft/vscode-parinfer"
-	},
-	"activationEvents": [
-		"onLanguage:clojure"
-	],
-	"main": "./extension",
-	"contributes": {
-		"keybindings": [{
-			"command": "parinfer.toggleMode",
-			"key": "Ctrl+8",
-			"mac": "Cmd+8"
-		},{
-			"command": "parinfer.toggleEnablement",
-			"key": "Ctrl+9",
-			"mac": "Cmd+9"
-		}],
-		"commands": [{
-			"command": "parinfer.toggleMode",
-			"title": "Parinfer: Toggle Mode"
-		}, {
-			"command": "parinfer.toggleEnablement",
-			"title": "Parinfer: Toggle Enablement"
-		}, {
-			"command": "parinfer.switchState",
-			"title": "Parinfer: Switch State"
-		}]
-	},
-	"scripts": {
-		"vscode:prepublish": "node ./node_modules/vscode/bin/compile",
-		"compile": "node ./node_modules/vscode/bin/compile -watch -p ./"
-	},
-	"devDependencies": {
-		"typescript": "^1.6.2",
-		"vscode": "0.10.x"
-	},
-	"license": "MIT"
+  "name": "vscode-parinfer",
+  "displayName": "Parinfer",
+  "description": "Parinfer for VS Code",
+  "version": "0.1.0",
+  "publisher": "joaomoreno",
+  "icon": "icon.png",
+  "engines": {
+    "vscode": "0.10.x"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/Microsoft/vscode-parinfer"
+  },
+  "activationEvents": [
+    "onLanguage:clojure"
+  ],
+  "main": "./extension",
+  "contributes": {
+    "keybindings": [
+      {
+        "command": "parinfer.toggleMode",
+        "key": "Ctrl+8",
+        "mac": "Cmd+8"
+      },
+      {
+        "command": "parinfer.toggleEnablement",
+        "key": "Ctrl+9",
+        "mac": "Cmd+9"
+      }
+    ],
+    "commands": [
+      {
+        "command": "parinfer.toggleMode",
+        "title": "Parinfer: Toggle Mode"
+      },
+      {
+        "command": "parinfer.toggleEnablement",
+        "title": "Parinfer: Toggle Enablement"
+      },
+      {
+        "command": "parinfer.switchState",
+        "title": "Parinfer: Switch State"
+      }
+    ]
+  },
+  "scripts": {
+    "vscode:prepublish": "node ./node_modules/vscode/bin/compile",
+    "compile": "node ./node_modules/vscode/bin/compile -watch -p ./"
+  },
+  "devDependencies": {
+    "typescript": "^1.6.2",
+    "vscode": "0.10.x"
+  },
+  "license": "MIT"
 }
