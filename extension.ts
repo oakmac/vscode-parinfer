@@ -100,8 +100,10 @@ export function activate(context: ExtensionContext) {
 		if (typeof output.text !== 'string') {
 			return;
 		}
-		const range = new Range(new Position(0, 0), document.positionAt(input.length));
-		editor.edit(builder => builder.replace(range, output.text));	
+		if (input !== output.text) {
+			const range = new Range(new Position(0, 0), document.positionAt(input.length));
+			editor.edit(builder => builder.replace(range, output.text));
+		}
 	}
 
 	const eventuallyParinfer = debounce(parinfer, 50);
