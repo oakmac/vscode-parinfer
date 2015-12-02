@@ -15,7 +15,7 @@
   "activationEvents": [
     "onLanguage:clojure"
   ],
-  "main": "./extension",
+  "main": "./out/extension",
   "contributes": {
     "keybindings": [
       {

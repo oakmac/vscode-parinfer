@@ -1,4 +1,4 @@
 node_modules
-extension.js
+out
 *.map
 npm-debug.log
