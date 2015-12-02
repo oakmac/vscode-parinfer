@@ -1,5 +1,5 @@
 import {
-	Range, Position, TextEditor, ExtensionContext,
+	Range, Position, TextEditor, TextDocument, ExtensionContext,
 	commands, window, StatusBarAlignment,
 	TextEditorSelectionChangeEvent
 } from 'vscode';
@@ -26,8 +26,8 @@ function fromEditorPosition(editorPosition: Position): IPosition {
 	return { cursorLine: editorPosition.line, cursorX: editorPosition.character };
 }
 
-function shouldRun(fileName: string): boolean {
-	return /\.cljs?$/.test(fileName);
+function shouldRun(document: TextDocument): boolean {
+	return document.languageId === "clojure";
 }
 
 export function activate(context: ExtensionContext) {
@@ -45,7 +45,7 @@ export function activate(context: ExtensionContext) {
 	function render(editor: TextEditor) {
 		const uri = editor.document.uri.toString();
 
-		if (!shouldRun(editor.document.fileName)) {
+		if (!shouldRun(editor.document)) {
 			statusBarItem.hide();
 			return;
 		}
@@ -109,7 +109,7 @@ export function activate(context: ExtensionContext) {
 	const eventuallyParinfer = debounce(parinfer, 50);
 
 	function onSelectionChange({ textEditor }: TextEditorSelectionChangeEvent) {
-		if (!enabled || !shouldRun(textEditor.document.fileName)) {
+		if (!enabled || !shouldRun(textEditor.document)) {
 			return;
 		}
 
@@ -117,7 +117,7 @@ export function activate(context: ExtensionContext) {
 	}
 
 	function onEditorChange(editor: TextEditor) {
-		if (!shouldRun(editor.document.fileName)) {
+		if (!shouldRun(editor.document)) {
 			render(editor);
 			return;
 		}
