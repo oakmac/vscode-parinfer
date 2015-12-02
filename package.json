@@ -48,6 +48,9 @@
     "vscode:prepublish": "node ./node_modules/vscode/bin/compile",
     "compile": "node ./node_modules/vscode/bin/compile -watch -p ./"
   },
+  "dependencies": {
+    "parinfer": "^0.2.1"
+  },
   "devDependencies": {
     "typescript": "^1.6.2",
     "vscode": "0.10.x"

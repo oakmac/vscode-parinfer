@@ -3,7 +3,7 @@ import {
 	commands, window, StatusBarAlignment,
 	TextEditorSelectionChangeEvent
 } from 'vscode';
-import { indentMode, parenMode, IPosition } from './parinfer';
+import { indentMode, parenMode, IPosition } from 'parinfer';
 
 enum Mode {
 	Paren,
@@ -23,7 +23,7 @@ function fromEditorPosition(editorPosition: Position): IPosition {
 		return null;
 	}
 
-	return { row: editorPosition.line, column: editorPosition.character };
+	return { cursorLine: editorPosition.line, cursorX: editorPosition.character };
 }
 
 function shouldRun(fileName: string): boolean {
@@ -97,12 +97,11 @@ export function activate(context: ExtensionContext) {
 		const fn = (getMode(uri) === Mode.Indent && position) ? indentMode : parenMode;
 		const output = position ? fn(input, fromEditorPosition(position)) : fn(input);
 
-		if (typeof output !== 'string') {
+		if (typeof output.text !== 'string') {
 			return;
 		}
-
 		const range = new Range(new Position(0, 0), document.positionAt(input.length));
-		editor.edit(builder => builder.replace(range, output));
+		editor.edit(builder => builder.replace(range, output.text));	
 	}
 
 	const eventuallyParinfer = debounce(parinfer, 50);
