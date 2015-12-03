@@ -43,13 +43,13 @@ export function activate(context: ExtensionContext) {
 	statusBarItem.command = 'parinfer.switchState';
 
 	function render(editor: TextEditor) {
-		const uri = editor.document.uri.toString();
-
-		if (!shouldRun(editor.document)) {
+		if (!editor || !shouldRun(editor.document)) {
 			statusBarItem.hide();
 			return;
 		}
-
+		
+		const uri = editor.document.uri.toString();
+		
 		if (!enabled) {
 			statusBarItem.text = '$(code)';
 			statusBarItem.color = '#ccc';
@@ -117,7 +117,7 @@ export function activate(context: ExtensionContext) {
 	}
 
 	function onEditorChange(editor: TextEditor) {
-		if (!shouldRun(editor.document)) {
+		if (!editor || !shouldRun(editor.document)) {
 			render(editor);
 			return;
 		}
