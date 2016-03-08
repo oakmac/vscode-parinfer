@@ -1,3 +1,5 @@
+'use strict';
+
 import {
 	Range, Position, TextEditor, ExtensionContext,
 	commands, window, StatusBarAlignment,
@@ -27,7 +29,7 @@ function fromEditorPosition(editorPosition: Position): IPosition {
 }
 
 function shouldRun(fileName: string): boolean {
-	return /\.cljs?$/.test(fileName);
+	return /\.clj[csx]?$|build\.boot$/.test(fileName);
 }
 
 export function activate(context: ExtensionContext) {
