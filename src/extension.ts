@@ -5,7 +5,8 @@ import {
 	TextEditor,
 	ExtensionContext,
 	commands,
-	window
+	window,
+	workspace
 } from "vscode";
 
 import { EditorStates, EditorState } from "editor";
@@ -54,8 +55,8 @@ export function activate(context: ExtensionContext) {
 		commands.registerCommand("parinfer.disable", () => {
 			disableParinfer(window.activeTextEditor);
 		}),
-		window.onDidChangeTextEditorSelection(() => {
-			applyParinfer(window.activeTextEditor);
+		window.onDidChangeTextEditorSelection((event) => {
+			applyParinfer(window.activeTextEditor, event);
 		}),
 		window.onDidChangeActiveTextEditor(activatePane)
 	);

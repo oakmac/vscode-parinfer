@@ -92,8 +92,8 @@ export function findEndRow(lines: string[], idx: number): number {
 }
 
 export function linesDiff(textA: string, textB: string): LinesDiff {
-	const splitA = splitLines(textA); 
-	const splitB = splitLines(textB); 
+	const splitA = splitLines(textA);
+	const splitB = splitLines(textB);
 	const splitBoth = map((...splits) => splits, splitA, splitB);
 	const initialCount = { diff: 0, same: 0 };
 

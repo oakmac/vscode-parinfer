@@ -1,5 +1,8 @@
 import {
   TextEditor,
+	TextDocumentChangeEvent,
+	TextEditorSelectionChangeEvent,
+	TextEditorSelectionChangeKind,
   Position,
   Range,
   Selection,
@@ -16,7 +19,12 @@ export function disableParinfer(editor: TextEditor) {
 	editorStates.update((states: EditorStates) => states.set(editor, "disabled"));
 }
 
-function _applyParinfer(editor: TextEditor, mode: EditorState) {
+function _applyParinfer(editor: TextEditor, event: TextEditorSelectionChangeEvent, mode: EditorState) {
+
+	if (event && event.kind !== TextEditorSelectionChangeKind.Keyboard) {
+		return;
+	}
+
 	const currentText = editor.document.getText();
 	const lines = splitLines(currentText);
 
@@ -24,22 +32,21 @@ function _applyParinfer(editor: TextEditor, mode: EditorState) {
 		lines.push("");
 	}
 
-	const cursors = editor.selections;
-	const cursor = editor.selection;
-	const line = cursor.start.line;
+	const cursors = event ? event.selections : editor.selections;
+	const cursor = event ? event.selections[0].active : editor.selection.active;
+	const line = cursor.line;
 	const multipleCursors = cursors.length > 1;
-	const isSelection = cursor.isEmpty === false;
+	const isSelection = (event ? event.selections[0].isEmpty : editor.selection.isEmpty) === false;
 	const singleCursor = !(isSelection || multipleCursors);
 	const startRow = findStartRow(lines, line);
 	const endRow = findEndRow(lines, line);
 	const opts: IPosition = {
 		cursorLine: line - startRow,
-		cursorX: cursor.start.character
+		cursorX: cursor.character
 	};
 	const linesToInfer = lines.slice(startRow, endRow);
 	const textToInfer = linesToInfer.join("\n") + "\n";
 	const result = mode === "paren-mode" ? parenMode(textToInfer, opts) : indentMode(textToInfer, opts);
-	const nextCursor = new Position(line, result.cursorX);
 	const parinferSuccess = result.success;
 	const inferredText = parinferSuccess ? result.text : false;
 
@@ -47,30 +54,30 @@ function _applyParinfer(editor: TextEditor, mode: EditorState) {
 		editor.edit((edit) => {
 			edit.replace(
 				new Range(new Position(startRow, 0), new Position(endRow, 0)),
-				inferredText)
+				inferredText);
 		}, {
-			undoStopAfter: true,
+			undoStopAfter: false,
 			undoStopBefore: false
 		})
-		.then(() => {
-			if (singleCursor) {
+		.then((applied) => {
+			if (applied) {
+				const cursor = editor.selection.active;
+				const nextCursor = cursor.with(cursor.line, result.cursorX);
 				editor.selection = new Selection(nextCursor, nextCursor);
-			} else {
-				editor.selections = cursors;
 			}
 		});
 	}
-} 
+}
 
-export function applyParinfer(editor: TextEditor) {
+export function applyParinfer(editor: TextEditor, event?: TextEditorSelectionChangeEvent) {
 	const state = editorStates.deref().get(editor);
 
 	if (editor && state) {
 		if (state === "indent-mode") {
-			_applyParinfer(editor, "indent-mode");
+			_applyParinfer(editor, event, "indent-mode");
 		}
 		if (state === "paren-mode") {
-			_applyParinfer(editor, "paren-mode");
+			_applyParinfer(editor, event, "paren-mode");
 		}
 	}
 }
