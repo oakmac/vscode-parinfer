@@ -6,7 +6,7 @@
 
 ### ChangeLog
 
-[ChangeLog](https://github.com/narma/vscode-parinfer/releases)
+[ChangeLog](https://github.com/shaunlebron/vscode-parinfer/releases)
 
 
 ## Demo
