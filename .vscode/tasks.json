@@ -23,5 +23,5 @@
 	"args": ["run", "compile"],
 
 	// The compiler is started in watching mode
-	"isWatching": true
+	"isWatching": false
 }

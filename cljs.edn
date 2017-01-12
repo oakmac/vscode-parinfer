@@ -5,5 +5,8 @@
    :compiler
    {:target :nodejs
     :optimizations :simple
+    :language-in :ecmascript5
+    :language-out :ecmascript5
+    :hashbang false
     :output-dir "out-cljs"
     :output-to "out/extension.js"}}}}
