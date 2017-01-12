@@ -1,0 +1,9 @@
+{:cljs-version "1.9.293"
+ :builds
+ {:main
+  {:src "src-cljs"
+   :compiler
+   {:target :nodejs
+    :optimizations :simple
+    :output-dir "out-cljs"
+    :output-to "out/extension.js"}}}}

@@ -1,12 +1,8 @@
 import {
-	Range,
-	Position,
-	Selection,
 	TextEditor,
 	ExtensionContext,
 	commands,
 	window,
-	workspace
 } from "vscode";
 
 import { EditorStates, EditorState } from "editor";

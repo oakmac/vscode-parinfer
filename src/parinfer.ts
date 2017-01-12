@@ -1,6 +1,5 @@
 import {
   TextEditor,
-	TextDocumentChangeEvent,
 	TextEditorSelectionChangeEvent,
 	TextEditorSelectionChangeKind,
   Position,

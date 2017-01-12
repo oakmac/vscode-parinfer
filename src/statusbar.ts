@@ -1,10 +1,4 @@
 import {
-	Range,
-	Position,
-	Selection,
-	TextEditor,
-	ExtensionContext,
-	commands,
 	window,
 	StatusBarAlignment,
 	StatusBarItem

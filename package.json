@@ -41,15 +41,14 @@
         ]
     },
     "scripts": {
-        "vscode:prepublish": "tsc -p ./",
-        "compile": "tsc -watch -p ./"
+        "vscode:prepublish": "cljs build main",
+        "compile": "cljs watch main"
     },
     "dependencies": {
         "parinfer": "^2.0.0"
     },
     "devDependencies": {
-        "@types/node": "^6.0.51",
-        "typescript": "^2.0.10"
+        "cljs": "cljs/tool"
     },
     "license": "MIT"
 }
