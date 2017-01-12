@@ -23,5 +23,21 @@
 	"args": ["run", "compile"],
 
 	// The compiler is started in watching mode
-	"isWatching": false
+	"isWatching": true,
+
+	"problemMatcher": {
+		"owner": "cljs",
+		"fileLocation": ["relative", "${workspaceRoot}"],
+		"pattern": {
+			"regexp": "^Caused by: (.*) at line (\\d+) (.*) {",
+			"message": 1,
+			"line": 2,
+			"file": 3
+		},
+		"watching": {
+			"activeOnStart": true,
+			"beginsPattern": "^Change detected, recompiling",
+			"endsPattern": "^... done. Elapsed"
+		}
+	}
 }

@@ -42,7 +42,7 @@
     },
     "scripts": {
         "vscode:prepublish": "cljs build main",
-        "compile": "cljs build main"
+        "compile": "cljs watch main"
     },
     "dependencies": {
         "parinfer": "^2.0.0"
