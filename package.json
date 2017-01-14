@@ -40,15 +40,8 @@
             }
         ]
     },
-    "scripts": {
-        "vscode:prepublish": "cljs build main",
-        "compile": "cljs watch main"
-    },
     "dependencies": {
         "parinfer": "^2.0.0"
-    },
-    "devDependencies": {
-        "cljs": "cljs/tool"
     },
     "license": "MIT"
 }
