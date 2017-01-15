@@ -2,10 +2,6 @@
 
 [Parinfer](http://shaunlebron.github.io/parinfer/) for [VS Code](https://code.visualstudio.com)!
 
-## Demo
-
-![demo](parinfer.gif)
-
 ## Development Setup
 
 - `npm install`
@@ -13,4 +9,3 @@
 - Open project in VS Code
 - View > Debug.  (Press Play)
 - A second VS Code window will open with your latest parinfer changes
-

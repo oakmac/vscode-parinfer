@@ -1,54 +1,54 @@
 {
-    "name": "vscode-parinfer",
-    "displayName": "Parinfer",
-    "description": "Parinfer for VS Code",
-    "version": "0.4.0",
-    "publisher": "shaunlebron",
-    "icon": "icon.png",
-    "engines": {
-        "vscode": "0.10.x"
-    },
-    "repository": {
-        "type": "git",
-        "url": "https://github.com/shaunlebron/vscode-parinfer"
-    },
-    "activationEvents": [
-        "onLanguage:clojure"
+  "name": "vscode-parinfer",
+  "displayName": "Parinfer",
+  "description": "Parinfer for VS Code",
+  "version": "0.4.0",
+  "publisher": "shaunlebron",
+  "icon": "icon.png",
+  "engines": {
+    "vscode": "0.10.x"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/shaunlebron/vscode-parinfer"
+  },
+  "activationEvents": [
+    "onLanguage:clojure"
+  ],
+  "main": "./out/extension",
+  "contributes": {
+    "keybindings": [
+      {
+        "command": "parinfer.toggleMode",
+        "key": "Ctrl+8",
+        "mac": "Cmd+8"
+      },
+      {
+        "command": "parinfer.disable",
+        "key": "Ctrl+9",
+        "mac": "Cmd+9"
+      }
     ],
-    "main": "./out/extension",
-    "contributes": {
-        "keybindings": [
-            {
-                "command": "parinfer.toggleMode",
-                "key": "Ctrl+8",
-                "mac": "Cmd+8"
-            },
-            {
-                "command": "parinfer.disable",
-                "key": "Ctrl+9",
-                "mac": "Cmd+9"
-            }
-        ],
-        "commands": [
-            {
-                "command": "parinfer.toggleMode",
-                "title": "Parinfer: Toggle Mode"
-            },
-            {
-                "command": "parinfer.disable",
-                "title": "Parinfer: Disable"
-            }
-        ]
-    },
-    "dependencies": {
-        "parinfer": "^2.0.0"
-    },
-    "devDependencies": {
-        "cljs": "cljs/tool"
-    },
-    "scripts": {
-      "build": "cljs build main",
-      "watch": "cljs watch main"
-    },
-    "license": "MIT"
+    "commands": [
+      {
+        "command": "parinfer.toggleMode",
+        "title": "Parinfer: Toggle Mode"
+      },
+      {
+        "command": "parinfer.disable",
+        "title": "Parinfer: Disable"
+      }
+    ]
+  },
+  "dependencies": {
+    "parinfer": "^2.0.0"
+  },
+  "devDependencies": {
+    "cljs": "github:cljs/tool#0.0.1"
+  },
+  "scripts": {
+    "build": "cljs build main",
+    "watch": "cljs watch main"
+  },
+  "license": "MIT"
 }
