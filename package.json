@@ -43,5 +43,12 @@
     "dependencies": {
         "parinfer": "^2.0.0"
     },
+    "devDependencies": {
+        "cljs": "cljs/tool"
+    },
+    "scripts": {
+      "build": "cljs build main",
+      "watch": "cljs watch main"
+    },
     "license": "MIT"
 }
