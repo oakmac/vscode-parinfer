@@ -2,43 +2,6 @@ import { Atom, LinesDiff } from "utils";
 
 export const noop = () => undefined;
 
-export function atom(val?): Atom<any> {
-
-	let watchers: Function[] = [];
-	const notify = () => watchers.forEach((f) => f(val));
-
-	return {
-		update: (fn) => {
-			val = fn(val);
-			notify();
-		},
-		addWatch: (fn) => {
-			watchers.push(fn);
-		},
-		removeWatch: (fn) => {
-			watchers = watchers.filter((f) => f !== fn);
-		},
-		deref: () => val
-	}
-}
-
-export function map(fn: Function, ...xs: Array<any>): Array<any> {
-	let result = [];
-	let idx = 0;
-	const ln = xs[0].length;
-
-	while (idx < ln) {
-		result.push(fn(...xs.map((item) => item[idx])));
-		idx++;
-	}
-
-	return result;
-}
-
-export function splitLines(text: string): Array<string> {
-	return text.split(/\n/);
-}
-
 export function debounce(f: Function, interval: number) {
   let tid;
   return (...args) => {

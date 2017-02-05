@@ -37,23 +37,3 @@ function activatePane(editor?: TextEditor) {
 		parinfer(editor);
 	}
 }
-
-export function activate(context: ExtensionContext) {
-
-	initStatusBar("parinfer.toggleMode");
-
-	activatePane(window.activeTextEditor);
-
-	context.subscriptions.push(
-		commands.registerCommand("parinfer.toggleMode", () => {
-			toggleMode(window.activeTextEditor);
-		}),
-		commands.registerCommand("parinfer.disable", () => {
-			disableParinfer(window.activeTextEditor);
-		}),
-		window.onDidChangeTextEditorSelection((event) => {
-			applyParinfer(window.activeTextEditor, event);
-		}),
-		window.onDidChangeActiveTextEditor(activatePane)
-	);
-}
