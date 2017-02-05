@@ -1,4 +1,6 @@
-(ns vscode-parinfer.core)
+(ns vscode-parinfer.core
+  (:require
+    [goog.functions :refer [debounce]]))
 
 (def vscode (js/require "vscode"))
 
@@ -17,6 +19,66 @@
        "These changes will only affect whitespace and indentation; the structure of the file will be unchanged.\n"
        diff (if (= diff 1) "line" "lines") " will be affected.\n"
        "Would you like Parinfer to modify the file? (recommended)"))
+
+;; NOTE: this is the "parent expression" hack
+;; https://github.com/oakmac/atom-parinfer/issues/9
+(defn- is-parent-expression-line?
+  [line]
+  (and (string? line)
+       (.match line #"^\([a-zA-Z]")))
+
+(defn- find-start-row
+  "Returns the index of the first line we need to send to Parinfer."
+  [lines cursor-idx]
+  (if
+    ;; on the first line?
+    (zero? cursor-idx) 0
+    ;; else "look up" until we find the closest parent expression
+    (loop [idx (dec cursor-idx)]
+      (if (or (zero? idx)
+              (is-parent-expression-line? (nth lines idx false)))
+        idx
+        (recur (dec idx))))))
+
+(defn- find-end-row
+  "Returns the index of the last line we need to send to Parinfer."
+  [lines cursor-idx]
+  (let [cursor-plus-1 (inc cursor-idx)
+        cursor-plus-2 (inc cursor-plus-1)
+        max-idx (dec (count lines))]
+    ;; are we near the last line?
+    (if (or (== max-idx cursor-idx)
+            (== max-idx cursor-plus-1)
+            (== max-idx cursor-plus-2))
+      ;; if so, just return the max idx
+      max-idx
+      ;; else "look down" until we find the start of the next parent expression
+      (loop [idx cursor-plus-2]
+        (if (or (== idx max-idx)
+                (is-parent-expression-line? (nth lines idx false)))
+          idx
+          (recur (inc idx)))))))
+
+(defn split-lines
+  "Same as clojure.string/split-lines, except it doesn't remove empty lines at
+  the end of the text."
+  [text]
+  (vec (.split text #"\r?\n")))
+
+(defn lines-diff
+  "Returns a map {:diff X, :same Y} of the difference in lines between two texts.
+   NOTE: this is probably a reinvention of clojure.data/diff"
+  [text-a text-b]
+  (let [vec-a (split-lines text-a)
+        vec-b (split-lines text-b)
+        v-both (map vector vec-a vec-b)
+        initial-count {:diff 0, :same 0}]
+    (reduce (fn [running-count [line-a line-b]]
+              (if (= line-a line-b)
+                (update-in running-count [:same] inc)
+                (update-in running-count [:diff] inc)))
+            initial-count
+            v-both)))
 
 (defn getEditorRange [editor]
   (let [lineNo (dec editor.document.lineCount)
