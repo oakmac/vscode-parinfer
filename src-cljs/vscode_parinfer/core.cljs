@@ -53,6 +53,27 @@
       (sbItem.show)
       (sbItem.hide))))
 
+(add-watch editorStates :foo
+  (fn [_key _ref _old _new]
+    (let [editor vscode.window.activeTextEditor
+          states (get _new editor)]
+      (cond
+        (and editor state)
+        (when (#{:indent-mode :paren-mode} state)
+          (applyParinfer editor))
+
+        editor
+        (updateStatusBar)))))
+
+(defn toggleMode [editor]
+  (swap! editorStates update editor
+    {:indent-mode :paren-mode
+     :paren-mode :indent-mode}))
+
+(defn activatePane [editor]
+  (when editor
+    (parinfer editor)))
+
 (defn activate [context]
   (initStatusBar "parinfer.toggleMode")
   (activatePane vscode.window.activeTextEditor)
