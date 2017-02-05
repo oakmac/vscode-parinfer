@@ -26,6 +26,33 @@
       (vscode.Position. 0 0)
       (vscode.Position. lineNo charNo))))
 
+(def statusBarItem (atom nil))
+
+(defn initStatusBar [cmd]
+  (let [sbItem (vscode.window.createStatusBarItem
+                 vscode.StatusBarAlignment.Right)]
+    (set! sbItem.command cmd)
+    (sbItem.show)
+    (reset! statusBarItem sbItem)))
+
+(defn setStatusIndicator [statusBarItem state]
+  (when state
+    (let [disabled? (= :disabled state)
+          mode ({:indent-mode "Indent" :paren-mode "Paren"} state)]
+      (set! statusBarItem.text (str "$(code) " mode))
+      (set! statusBarItem.color (if disabled? "#ccc" "#fff"))
+      (set! statusBarItem.tooltip
+        (if disabled?
+          "Parinfer is disabled"
+          (str "Parinfer is in " mode " mode"))))))
+
+(defn updateStatusBar [state]
+  (let [sbItem @statusBarItem]
+    (setStatusIndicator sbItem state)
+    (if state
+      (sbItem.show)
+      (sbItem.hide))))
+
 (defn activate [context]
   (initStatusBar "parinfer.toggleMode")
   (activatePane vscode.window.activeTextEditor)
