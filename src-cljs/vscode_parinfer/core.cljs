@@ -2,6 +2,16 @@
 
 (def vscode (js/require "vscode"))
 
+(def editorStates (atom {}))
+
+(defn getEditorRange [editor]
+  (let [lineNo (dec editor.document.lineCount)
+        line (editor.document.lineAt lineNo)
+        charNo line.text.length]
+    (vscode.Range.
+      (vscode.Position. 0 0)
+      (vscode.Position. lineNo charNo))))
+
 (defn activate [context]
   (initStatusBar "parinfer.toggleMode")
   (activatePane vscode.window.activeTextEditor)
