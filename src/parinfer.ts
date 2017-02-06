@@ -14,10 +14,6 @@ import { editorStates, getEditorRange } from "./editor";
 import { map, splitLines, noop, findEndRow, findStartRow, linesDiff } from "./utils";
 import { parenModeFailedMsg, parenModeChangedFileMsg } from "./messages";
 
-export function disableParinfer(editor: TextEditor) {
-	editorStates.update((states: EditorStates) => states.set(editor, "disabled"));
-}
-
 function _applyParinfer(editor: TextEditor, event: TextEditorSelectionChangeEvent, mode: EditorState) {
 
 	if (event && event.kind !== TextEditorSelectionChangeKind.Keyboard) {
@@ -65,19 +61,6 @@ function _applyParinfer(editor: TextEditor, event: TextEditorSelectionChangeEven
 				editor.selection = new Selection(nextCursor, nextCursor);
 			}
 		});
-	}
-}
-
-export function applyParinfer(editor: TextEditor, event?: TextEditorSelectionChangeEvent) {
-	const state = editorStates.deref().get(editor);
-
-	if (editor && state) {
-		if (state === "indent-mode") {
-			_applyParinfer(editor, event, "indent-mode");
-		}
-		if (state === "paren-mode") {
-			_applyParinfer(editor, event, "paren-mode");
-		}
 	}
 }
 

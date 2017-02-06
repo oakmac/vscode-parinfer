@@ -4,11 +4,6 @@
 
 (def vscode (js/require "vscode"))
 
-(def editorStates (atom {}))
-;; :disabled
-;; :indent-mode
-;; :paren-mode
-
 (defn parenModeFailedMsg [currentFile]
   (str "Parinfer was unable to parse " currentFile ".\n"
        "It is likely that this file has unbalanced parentheses and will not compile.\n"
@@ -80,6 +75,16 @@
             initial-count
             v-both)))
 
+(defn _applyParinfer [editor event mode])
+
+(defn applyParinfer [editor event]
+  (let [state (get @editorStates editor)]
+    (when (and editor state)
+      (case state
+        :indent-mode (_applyParinfer editor event :indent-mode)
+        :paren-mode  (_applyParinfer editor event :paren-mode)
+        nil))))
+
 (defn getEditorRange [editor]
   (let [lineNo (dec editor.document.lineCount)
         line (editor.document.lineAt lineNo)
@@ -87,6 +92,10 @@
     (vscode.Range.
       (vscode.Position. 0 0)
       (vscode.Position. lineNo charNo))))
+
+;;------------------------------------------------------------------------------
+;; Status Bar
+;;------------------------------------------------------------------------------
 
 (def statusBarItem (atom nil))
 
@@ -115,6 +124,15 @@
       (sbItem.show)
       (sbItem.hide))))
 
+;;------------------------------------------------------------------------------
+;; Editor States
+;;------------------------------------------------------------------------------
+
+(def editorStates (atom {}))
+;; :disabled
+;; :indent-mode
+;; :paren-mode
+
 (add-watch editorStates :foo
   (fn [_key _ref _old _new]
     (let [editor vscode.window.activeTextEditor
@@ -127,10 +145,19 @@
         editor
         (updateStatusBar)))))
 
+(defn disableParinfer [editor]
+  (swap! editorStates assoc editor :disabled))
+
 (defn toggleMode [editor]
   (swap! editorStates update editor
     {:indent-mode :paren-mode
      :paren-mode :indent-mode}))
+
+;;------------------------------------------------------------------------------
+;; Integration
+;;------------------------------------------------------------------------------
+
+(defn parinfer [editor])
 
 (defn activatePane [editor]
   (when editor
