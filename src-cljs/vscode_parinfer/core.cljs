@@ -4,6 +4,11 @@
 
 (def vscode (js/require "vscode"))
 
+(def editorStates (atom {}))
+;; :disabled
+;; :indent-mode
+;; :paren-mode
+
 (defn parenModeFailedMsg [currentFile]
   (str "Parinfer was unable to parse " currentFile ".\n"
        "It is likely that this file has unbalanced parentheses and will not compile.\n"
@@ -128,11 +133,6 @@
 ;; Editor States
 ;;------------------------------------------------------------------------------
 
-(def editorStates (atom {}))
-;; :disabled
-;; :indent-mode
-;; :paren-mode
-
 (add-watch editorStates :foo
   (fn [_key _ref _old _new]
     (let [editor vscode.window.activeTextEditor
@@ -157,7 +157,10 @@
 ;; Integration
 ;;------------------------------------------------------------------------------
 
-(defn parinfer [editor])
+(defn parinfer [editor]
+  (let [init-parinfer? (= editor.document.languageId "clojure")]))
+
+
 
 (defn activatePane [editor]
   (when editor
