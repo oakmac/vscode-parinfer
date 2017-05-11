@@ -17,6 +17,22 @@
     ],
     "main": "./out/extension",
     "contributes": {
+        "configuration": {
+            "type": "object",
+            "title": "Parinfer",
+            "properties": {
+                "parinfer.defaultMode": {
+                    "type": "string",
+                    "enum": [
+                        "indent-mode",
+                        "paren-mode",
+                        "disabled"
+                    ],
+                    "default": "indent-mode",
+                    "description": "The default mode to be used when opening a new file."
+                }
+            }
+        },
         "keybindings": [
             {
                 "command": "parinfer.toggleMode",

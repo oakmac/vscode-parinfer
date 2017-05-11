@@ -6,7 +6,8 @@ import {
   Position,
   Range,
   Selection,
-  window
+  window,
+  workspace
 } from "vscode";
 
 import { indentMode, parenMode, IPosition } from "parinfer";
@@ -135,7 +136,8 @@ export function parinfer(editor: TextEditor) {
 			});
 			editorStates.update((states: EditorStates) => states.set(editor, "indent-mode"));
 		} else {
-			editorStates.update((states: EditorStates) => states.set(editor, "indent-mode"));
+			let defaultMode : EditorState = workspace.getConfiguration('parinfer').get<EditorState>("defaultMode");
+			editorStates.update((states: EditorStates) => states.set(editor, defaultMode))
 		}
 	}
 }
