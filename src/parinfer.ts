@@ -85,7 +85,14 @@ export function applyParinfer(editor: TextEditor, event?: TextEditorSelectionCha
 
 export function parinfer(editor: TextEditor) {
 
-	let shouldInit = editor.document.languageId === "clojure";
+  // This duplicates same languages in package.json under activationEvents.
+  // They might be needed here too in case parinfer somehow bypasses those activationEvents?
+	let shouldInit = (
+    editor.document.languageId === "clojure" ||
+    editor.document.languageId === "scheme" ||
+    editor.document.languageId === "lisp" ||
+    editor.document.languageId === "racket"
+  );
 
 	editorStates.update((states: EditorStates) => {
 
