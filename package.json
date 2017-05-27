@@ -13,7 +13,10 @@
         "url": "https://github.com/shaunlebron/vscode-parinfer"
     },
     "activationEvents": [
-        "onLanguage:clojure"
+        "onLanguage:clojure",
+        "onLanguage:lisp",
+        "onLanguage:scheme",
+        "onLanguage:racket"
     ],
     "main": "./out/extension",
     "contributes": {
