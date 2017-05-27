@@ -2,7 +2,7 @@
     "name": "vscode-parinfer",
     "displayName": "Parinfer",
     "description": "Parinfer for VS Code",
-    "version": "0.6.0",
+    "version": "0.6.1",
     "publisher": "shaunlebron",
     "icon": "icon.png",
     "engines": {
