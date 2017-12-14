@@ -16,7 +16,8 @@
         "onLanguage:clojure",
         "onLanguage:lisp",
         "onLanguage:scheme",
-        "onLanguage:racket"
+        "onLanguage:racket",
+        "onLanguage:extempore"        
     ],
     "main": "./out/extension",
     "contributes": {
