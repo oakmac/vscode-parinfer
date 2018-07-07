@@ -16,3 +16,8 @@
 ## Demo
 
 ![demo](parinfer.gif)
+
+
+## License
+
+[MIT License](LICENSE.md)

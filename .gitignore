@@ -1,4 +1,5 @@
 node_modules
 out
 *.map
-npm-debug.log
+npm-debug.
+*.diff
