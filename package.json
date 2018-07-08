@@ -17,7 +17,7 @@
         "onLanguage:lisp",
         "onLanguage:scheme",
         "onLanguage:racket",
-        "onLanguage:extempore"        
+        "onLanguage:extempore"
     ],
     "main": "./out/extension",
     "contributes": {
