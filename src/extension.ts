@@ -10,7 +10,7 @@ editorStates.addWatch((states) => {
   if (editor && currentEditorState) {
     updateStatusBar(currentEditorState)
     if (currentEditorState === 'indent-mode' || currentEditorState === 'paren-mode') {
-      applyParinfer(editor)
+      applyParinfer(editor, null)
     }
   } else if (editor) {
     updateStatusBar(null)

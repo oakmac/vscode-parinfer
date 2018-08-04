@@ -1,7 +1,5 @@
 import { Atom, LinesDiff } from "utils";
 
-export const noop = () => undefined;
-
 export function atom(val?): Atom<any> {
 
 	let watchers: Function[] = [];

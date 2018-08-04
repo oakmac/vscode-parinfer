@@ -41,4 +41,4 @@ function updateStatusBar (state) {
   }
 }
 
-export { statusBarItem, initStatusBar, updateStatusBar }
+export { initStatusBar, updateStatusBar }
