@@ -1,7 +1,7 @@
 import { window, StatusBarAlignment } from 'vscode'
 import { atom } from './utils'
 
-const statusBarItem = atom()
+const statusBarItem = atom(null)
 
 function initStatusBar (cmd) {
   const sbItem = window.createStatusBarItem(StatusBarAlignment.Right)
