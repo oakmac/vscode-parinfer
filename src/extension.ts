@@ -13,7 +13,7 @@ editorStates.addWatch((states) => {
       applyParinfer(editor)
     }
   } else if (editor) {
-    updateStatusBar()
+    updateStatusBar(null)
   }
 })
 
