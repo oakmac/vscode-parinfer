@@ -61,14 +61,16 @@
     ]
   },
   "scripts": {
-    "vscode:prepublish": "tsc -p ./",
-    "compile": "tsc -watch -p ./"
+    "compile": "tsc -watch -p ./",
+    "format": "standard --fix src/*.ts",
+    "vscode:prepublish": "tsc -p ./"
   },
   "dependencies": {
     "parinfer": "3.12.0"
   },
   "devDependencies": {
     "@types/node": "10.5.6",
+    "standard": "11.0.1",
     "typescript": "2.9.2"
   },
   "license": "MIT"

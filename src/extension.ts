@@ -1,9 +1,9 @@
 import { commands, window } from 'vscode'
 import { initStatusBar, updateStatusBar } from './statusbar'
 import { editorStates } from './editor'
-import { disableParinfer, applyParinfer, parinfer } from './parinfer'
+import { applyParinfer, disableParinfer, parinfer } from './parinfer'
 
-editorStates.addWatch((states) => {
+function onChangeEditorStates (states) {
   const editor = window.activeTextEditor
   const currentEditorState = states.get(editor)
 
@@ -15,7 +15,9 @@ editorStates.addWatch((states) => {
   } else if (editor) {
     updateStatusBar(null)
   }
-})
+}
+
+editorStates.addWatch(onChangeEditorStates)
 
 function toggleMode (editor) {
   editorStates.update((states) => {

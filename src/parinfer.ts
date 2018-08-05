@@ -54,13 +54,13 @@ function applyParinfer2 (editor, event, mode) {
         inferredText
       )
     }, undoOptions)
-    .then(function (applied) {
-      if (applied) {
-        const cursor = editor.selection.active
-        const nextCursor = cursor.with(cursor.line, result.cursorX)
-        editor.selection = new Selection(nextCursor, nextCursor)
-      }
-    })
+      .then(function (applied) {
+        if (applied) {
+          const cursor = editor.selection.active
+          const nextCursor = cursor.with(cursor.line, result.cursorX)
+          editor.selection = new Selection(nextCursor, nextCursor)
+        }
+      })
   }
 }
 
@@ -112,23 +112,23 @@ function parinfer (editor) {
 
     if (!parenModeSucceeded && showOpenFileDialog) {
       window.showInformationMessage(parenModeFailedMsg(currentFile), 'Ok')
-      .then((btn) => {
-        if (btn === 'Ok') {
-          editorStates.update((states) => states.set(editor, 'paren-mode'))
-        }
-      })
+        .then((btn) => {
+          if (btn === 'Ok') {
+            editorStates.update((states) => states.set(editor, 'paren-mode'))
+          }
+        })
     } else if (!parenModeSucceeded && !showOpenFileDialog) {
       editorStates.update((states) => states.set(editor, 'paren-mode'))
     } else if (parenModeChangedFile && showOpenFileDialog) {
       window.showInformationMessage(parenModeChangedFileMsg(currentFile, textDelta.diff), 'Yes', 'No')
-      .then((btn) => {
-        if (btn === 'Yes') {
-          editor.edit((edit) => {
-            edit.replace(getEditorRange(editor), parenModeText)
-          })
-          editorStates.update((states) => states.set(editor, 'indent-mode'))
-        }
-      })
+        .then((btn) => {
+          if (btn === 'Yes') {
+            editor.edit((edit) => {
+              edit.replace(getEditorRange(editor), parenModeText)
+            })
+            editorStates.update((states) => states.set(editor, 'indent-mode'))
+          }
+        })
     } else if (parenModeChangedFile && !showOpenFileDialog) {
       editor.edit((edit) => {
         edit.replace(getEditorRange(editor), parenModeText)
