@@ -1,3 +1,7 @@
+function isString (s) {
+  return typeof s === 'string'
+}
+
 function atom (val) {
   let watchers = []
   const notify = () => watchers.forEach((f) => f(val))
@@ -108,6 +112,7 @@ export {
   findEndRow,
   findStartRow,
   isParentExprLine,
+  isString,
   linesDiff,
   map,
   splitLines

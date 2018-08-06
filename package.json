@@ -28,11 +28,11 @@
         "parinfer.defaultMode": {
           "type": "string",
           "enum": [
-            "indent-mode",
-            "paren-mode",
-            "disabled"
+            "INDENT_MODE",
+            "PAREN_MODE",
+            "DISABLED"
           ],
-          "default": "indent-mode",
+          "default": "INDENT_MODE",
           "description": "The default mode to be used when opening a new file."
         }
       }

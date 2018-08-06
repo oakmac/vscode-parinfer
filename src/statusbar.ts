@@ -1,5 +1,5 @@
 import { window, StatusBarAlignment } from 'vscode'
-import { atom } from './utils'
+import { atom, isString } from './utils'
 
 const statusBarItem = atom(null)
 
@@ -22,17 +22,21 @@ function setStatusDisabledIndicator (statusBarItem) {
 }
 
 function setStatusIndicator (statusBarItem, state) {
-  const mode = state === 'indent-mode' ? 'Indent' : 'Paren'
-  statusBarItem.text = `$(code) ${mode}`
+  let modeTxt = ''
+  if (state === 'INDENT_MODE') modeTxt = 'Indent'
+  else if (state === 'SMART_MODE') modeTxt = 'Smart'
+  else if (state === 'PAREN_MODE') modeTxt = 'Paren'
+
+  statusBarItem.text = `$(code) ${modeTxt}`
   statusBarItem.color = enabledColor
-  statusBarItem.tooltip = `Parinfer is in ${mode} mode`
+  statusBarItem.tooltip = `Parinfer is in ${modeTxt} mode`
 }
 
 function updateStatusBar (state) {
   const sbItem = statusBarItem.deref()
-  if (typeof state !== 'string') {
+  if (!isString(state)) {
     sbItem.hide()
-  } else if (state === 'disabled') {
+  } else if (state === 'DISABLED') {
     setStatusDisabledIndicator(sbItem)
     sbItem.show()
   } else {
