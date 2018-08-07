@@ -47,7 +47,7 @@ function debounce (fn, interval) {
 }
 
 function isParentExprLine (line) {
-  return typeof line === 'string' && line.match(/^\([a-zA-Z]/) !== null
+  return isString(line) && line.match(/^\([a-zA-Z]/) !== null
 }
 
 function findStartRow (lines, idx) {
