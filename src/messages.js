@@ -1,4 +1,4 @@
-export function parenModeFailedMsg (currentFile) {
+function parenModeFailedMsg (currentFile) {
   return (
     'Parinfer was unable to parse ' + currentFile + ' ' +
     'It is likely that this file has unbalanced parentheses and will not compile. ' +
@@ -7,7 +7,7 @@ export function parenModeFailedMsg (currentFile) {
   )
 }
 
-export function parenModeChangedFileMsg (currentFile, diff) {
+function parenModeChangedFileMsg (currentFile, diff) {
   const lines = (diff === 1 ? 'line' : 'lines')
 
   return (
@@ -17,3 +17,6 @@ export function parenModeChangedFileMsg (currentFile, diff) {
     'Would you like Parinfer to modify the file? (recommended)'
   )
 }
+
+exports.parenModeFailedMsg = parenModeFailedMsg
+exports.parenModeChangedFileMsg = parenModeChangedFileMsg

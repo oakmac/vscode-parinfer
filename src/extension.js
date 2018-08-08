@@ -1,7 +1,18 @@
-import { commands, window } from 'vscode'
-import { initStatusBar, updateStatusBar } from './statusbar'
-import { editorStates } from './editor'
-import { applyParinfer, disableParinfer, helloEditor } from './parinfer'
+const vscode = require('vscode')
+const window = vscode.window
+
+const statusBar = require('./statusbar')
+const initStatusBar = statusBar.initStatusBar
+const updateStatusBar = statusBar.updateStatusBar
+
+const editor = require('./editor')
+const editorStates = editor.editorStates
+
+const parinfer2 = require('./parinfer')
+
+// -----------------------------------------------------------------------------
+// Activate
+// -----------------------------------------------------------------------------
 
 function onChangeEditorStates (states) {
   const editor = window.activeTextEditor
@@ -10,7 +21,7 @@ function onChangeEditorStates (states) {
   if (editor && currentEditorState) {
     updateStatusBar(currentEditorState)
     if (currentEditorState === 'INDENT_MODE' || currentEditorState === 'PAREN_MODE') {
-      applyParinfer(editor, null)
+      parinfer2.applyParinfer(editor, null)
     }
   } else if (editor) {
     updateStatusBar(null)
@@ -28,7 +39,7 @@ function toggleMode (editor) {
 
 function activatePane (editor) {
   if (editor) {
-    helloEditor(editor)
+    parinfer2.helloEditor(editor)
   }
 }
 
@@ -61,18 +72,18 @@ function activate (context) {
   activatePane(window.activeTextEditor)
 
   context.subscriptions.push(
-    commands.registerCommand('parinfer.toggleMode', () => {
+    vscode.commands.registerCommand('parinfer.toggleMode', () => {
       toggleMode(window.activeTextEditor)
     }),
-    commands.registerCommand('parinfer.disable', () => {
-      disableParinfer(window.activeTextEditor)
+    vscode.commands.registerCommand('parinfer.disable', () => {
+      parinfer2.disableParinfer(window.activeTextEditor)
     }),
     window.onDidChangeTextEditorSelection((event) => {
-      applyParinfer(window.activeTextEditor, event)
+      parinfer2.applyParinfer(window.activeTextEditor, event)
     }),
     window.onDidChangeTextEditorSelection(selectionHasChanged),
     window.onDidChangeActiveTextEditor(activatePane)
   )
 }
 
-export { activate }
+exports.activate = activate

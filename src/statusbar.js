@@ -1,5 +1,10 @@
-import { window, StatusBarAlignment } from 'vscode'
-import { atom, isString } from './utils'
+const vscode = require('vscode')
+const window = vscode.window
+const StatusBarAlignment = vscode.StatusBarAlignment
+
+const util = require('./utils')
+const atom = util.atom
+const isString = util.isString
 
 const statusBarItem = atom(null)
 
@@ -45,4 +50,5 @@ function updateStatusBar (state) {
   }
 }
 
-export { initStatusBar, updateStatusBar }
+exports.initStatusBar = initStatusBar
+exports.updateStatusBar = updateStatusBar

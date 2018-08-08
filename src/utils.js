@@ -106,14 +106,12 @@ function linesDiff (textA, textB) {
   }, initialCount)
 }
 
-export {
-  atom,
-  debounce,
-  findEndRow,
-  findStartRow,
-  isParentExprLine,
-  isString,
-  linesDiff,
-  map,
-  splitLines
-}
+exports.atom = atom
+exports.debounce = debounce
+exports.findEndRow = findEndRow
+exports.findStartRow = findStartRow
+exports.isParentExprLine = isParentExprLine
+exports.isString = isString
+exports.linesDiff = linesDiff
+exports.map = map
+exports.splitLines = splitLines

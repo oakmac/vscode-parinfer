@@ -6,7 +6,7 @@
   "publisher": "shaunlebron",
   "icon": "icon.png",
   "engines": {
-    "vscode": "0.10.x"
+    "vscode": "^1.0.0"
   },
   "repository": {
     "type": "git",
@@ -19,7 +19,7 @@
     "onLanguage:racket",
     "onLanguage:extempore"
   ],
-  "main": "./out/extension",
+  "main": "./src/extension.js",
   "contributes": {
     "configuration": {
       "type": "object",
@@ -61,9 +61,7 @@
     ]
   },
   "scripts": {
-    "compile": "tsc -watch -p ./",
-    "format": "standard --fix src/*.ts",
-    "vscode:prepublish": "tsc -p ./"
+    "format": "standard --fix src/*.js"
   },
   "dependencies": {
     "parinfer": "3.12.0"

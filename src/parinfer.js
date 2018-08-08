@@ -1,17 +1,27 @@
-import {
-  Position,
-  Range,
-  Selection,
-  TextEditorSelectionChangeKind,
-  window,
-  workspace
-} from 'vscode'
+const vscode = require('vscode')
+const Position = vscode.Position
+const Range = vscode.Range
+const Selection = vscode.Selection
+const TextEditorSelectionChangeKind = vscode.TextEditorSelectionChangeKind
+const window = vscode.window
+const workspace = vscode.workspace
 
-import { indentMode, parenMode, smartMode } from 'parinfer'
-import { EditorState } from 'editor'
-import { editorStates, getEditorRange } from './editor'
-import { isString, findEndRow, findStartRow, linesDiff, splitLines } from './utils'
-import { parenModeFailedMsg, parenModeChangedFileMsg } from './messages'
+const parinfer = require('parinfer')
+
+const editor2 = require('./editor')
+const editorStates = editor2.editorStates
+const getEditorRange = editor2.getEditorRange
+
+const util = require('./utils')
+const isString = util.isString
+const findEndRow = util.findEndRow
+const findStartRow = util.findStartRow
+const linesDiff = util.linesDiff
+const splitLines = util.splitLines
+
+const messages = require('./messages')
+const parenModeFailedMsg = messages.parenModeFailedMsg
+const parenModeChangedFileMsg = messages.parenModeChangedFileMsg
 
 function disableParinfer (editor) {
   editorStates.update((states) => states.set(editor, 'DISABLED'))
@@ -62,9 +72,9 @@ function applyParinfer2 (editor, event, mode) {
 
   // run Parinfer
   let result = null
-  if (mode === 'INDENT_MODE') result = indentMode(textToInfer, opts)
-  else if (mode === 'SMART_MODE') result = smartMode(textToInfer, opts)
-  else if (mode === 'PAREN_MODE') result = parenMode(textToInfer, opts)
+  if (mode === 'INDENT_MODE') result = parinfer.indentMode(textToInfer, opts)
+  else if (mode === 'SMART_MODE') result = parinfer.smartMode(textToInfer, opts)
+  else if (mode === 'PAREN_MODE') result = parinfer.parenMode(textToInfer, opts)
 
   const parinferSuccess = result.success
   const inferredText = parinferSuccess ? result.text : false
@@ -112,7 +122,7 @@ function helloEditor2 (editor) {
   const showOpenFileDialog = true
   const currentFile = editor.document.fileName
   const currentText = editor.document.getText()
-  const parenModeResult = parenMode(currentText)
+  const parenModeResult = parinfer.parenMode(currentText)
   const parenModeSucceeded = parenModeResult.success === true
   const parenModeText = parenModeResult.text
   const textDelta = linesDiff(currentText, parenModeText)
@@ -143,7 +153,7 @@ function helloEditor2 (editor) {
     })
     editorStates.update((states) => states.set(editor, 'INDENT_MODE'))
   } else {
-    let defaultMode = workspace.getConfiguration('parinfer').get < EditorState > ('defaultMode')
+    let defaultMode = workspace.getConfiguration('parinfer').get('defaultMode')
     editorStates.update((states) => states.set(editor, defaultMode))
   }
 }
@@ -176,4 +186,6 @@ function helloEditor (editor) {
   }
 }
 
-export { applyParinfer, disableParinfer, helloEditor }
+exports.applyParinfer = applyParinfer
+exports.disableParinfer = disableParinfer
+exports.helloEditor = helloEditor
