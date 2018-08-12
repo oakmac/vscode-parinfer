@@ -37,7 +37,7 @@ setInterval(cleanUpEventsQueue, fiveSecondsMs)
 
 function processEventsQueue () {
   // defensive: these should never happen
-  if (eventsQueue.length === 0 || eventsQueue.type !== selectionChangeEvent) {
+  if (eventsQueue.length === 0 || eventsQueue[0].type !== selectionChangeEvent) {
     return
   }
 
