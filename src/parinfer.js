@@ -23,9 +23,18 @@ function disableParinfer (editor) {
   editorStates.update((states) => states.set(editor, 'DISABLED'))
 }
 
+const logParinferInput = false
+const logParinferOutput = false
+
 function applyParinfer2 (editor, inputText, opts, mode) {
   if (!opts) {
     opts = {}
+  }
+
+  if (logParinferInput) {
+    console.log(inputText)
+    console.log(opts)
+    console.log('~~~~~~~~~~~~~~~~ parinfer input ~~~~~~~~~~~~~~~~')
   }
 
   // FIXME: development hack
@@ -39,6 +48,11 @@ function applyParinfer2 (editor, inputText, opts, mode) {
   else if (mode === 'SMART_MODE') result = parinfer.smartMode(inputText, opts)
   else if (mode === 'PAREN_MODE') result = parinfer.parenMode(inputText, opts)
 
+  if (logParinferOutput) {
+    console.log(result)
+    console.log('~~~~~~~~~~~~~~~~ parinfer output ~~~~~~~~~~~~~~~~')
+  }
+
   // exit if parinfer was not successful
   // FIXME: I think there are some cases where we can show an error here?
   if (!result.success) return
@@ -46,7 +60,6 @@ function applyParinfer2 (editor, inputText, opts, mode) {
   // exit if the text does not need to be changed
   if (result.text === inputText) return
 
-  const currentCursor = editor.selection
   const document = editor.document
   const invalidRange = new Range(0, 0, document.lineCount + 5, 0)
   const fullDocumentRange = document.validateRange(invalidRange)
@@ -61,8 +74,10 @@ function applyParinfer2 (editor, inputText, opts, mode) {
   editPromise.then(function (editWasApplied) {
     if (editWasApplied) {
       const newCursorPosition = new Position(result.cursorLine, result.cursorX)
-      const nextCursor = new Selection(currentCursor.anchor, newCursorPosition)
-      editor.selection = nextCursor // new Selection(nextCursor, nextCursor)
+      const nextCursor = new Selection(newCursorPosition, newCursorPosition)
+      editor.selection = nextCursor
+    } else {
+      // TODO: should we do something here if the edit fails?
     }
   })
 }

@@ -35,23 +35,37 @@ function cleanUpEventsQueue () {
 
 setInterval(cleanUpEventsQueue, fiveSecondsMs)
 
+const logEventsQueue = false
+
 function processEventsQueue () {
   // defensive: these should never happen
-  if (eventsQueue.length === 0 || eventsQueue[0].type !== selectionChangeEvent) {
-    return
-  }
+  if (eventsQueue.length === 0) return
+  if (eventsQueue[0].type !== selectionChangeEvent) return
 
   // FIXME: do nothing here if the events in this queue are not for the current editor
   // another approach: empty the queue when switching editors
 
-  const editor = window.activeTextEditor
+  if (logEventsQueue) {
+    if (eventsQueue[2]) console.log('2: ', eventsQueue[2])
+    if (eventsQueue[1]) console.log('1: ', eventsQueue[1])
+    console.log('0: ', eventsQueue[0])
+    console.log('~~~~~~~~~~~~~~~~ eventsQueue ~~~~~~~~~~~~~~~~')
+  }
+
+  const activeEditor = window.activeTextEditor
   const txt = eventsQueue[0].txt
 
-  // FIXME: need to add selectionStartLine here
+  // cursor options
   let options = {
     cursorLine: eventsQueue[0].cursorLine,
     cursorX: eventsQueue[0].cursorX
   }
+
+  // TODO: this is not working correctly
+  // // add selectionStartLine if applicable
+  // if (eventsQueue[0].selectionStartLine) {
+  //   options.selectionStartLine = eventsQueue[0].selectionStartLine
+  // }
 
   // check the last two events for previous cursor information
   if (eventsQueue[1] && eventsQueue[1].cursorLine) {
@@ -68,7 +82,7 @@ function processEventsQueue () {
     options.changes = eventsQueue[1].changes
   }
 
-  parinfer2.applyParinfer(editor, txt, options)
+  parinfer2.applyParinfer(activeEditor, txt, options)
 }
 
 // -----------------------------------------------------------------------------
@@ -140,12 +154,19 @@ function onChangeTextDocument (evt) {
 
 function onChangeSelection (evt) {
   const editor = evt.textEditor
-  const parinferEvent = {
-    cursorLine: evt.selections[0].active.line,
-    cursorX: evt.selections[0].active.character,
+  const selection = evt.selections[0]
+  let parinferEvent = {
+    cursorLine: selection.active.line,
+    cursorX: selection.active.character,
     txt: editor.document.getText(),
     type: selectionChangeEvent
   }
+
+  // TODO: this is not working correctly
+  // // add selectionStartLine if applicable
+  // if (selection && !selection.isEmpty) {
+  //   parinferEvent.selectionStartLine = selection.start.line
+  // }
 
   // put this event on the queue
   eventsQueue.unshift(parinferEvent)
