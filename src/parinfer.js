@@ -42,9 +42,12 @@ function disableParinfer (editor) {
 // - forceBalance
 // - partialResult
 
-function applyParinfer2 (editor, event, mode) {
-  if (event && event.kind !== TextEditorSelectionChangeKind.Keyboard) {
-    return
+let prevCursorLine = null
+let prevCursorX = null
+
+function applyParinfer2 (editor, event, mode, opts) {
+  if (!opts) {
+    opts = {}
   }
 
   // FIXME: development hack
@@ -61,12 +64,18 @@ function applyParinfer2 (editor, event, mode) {
 
   const cursor = event ? event.selections[0].active : editor.selection.active
   const line = cursor.line
-  const startRow = findStartRow(lines, line)
-  const endRow = findEndRow(lines, line)
-  const opts = {
-    cursorLine: line - startRow,
-    cursorX: cursor.character
-  }
+  // const startRow = findStartRow(lines, line)
+  // const endRow = findEndRow(lines, line)
+  const startRow = 0
+  const endRow = lines.length - 1
+  opts.cursorLine = line - startRow
+  opts.cursorX = cursor.character
+
+  // const opts = {
+  //   changes: changes,
+  //   cursorLine: line - startRow,
+  //   cursorX: cursor.character
+  // }
   const linesToInfer = lines.slice(startRow, endRow)
   const textToInfer = linesToInfer.join('\n') + '\n'
 
@@ -106,14 +115,19 @@ function isRunState (state) {
          state === 'PAREN_MODE'
 }
 
-function applyParinfer (editor, event) {
+function applyParinfer (editor, event, opts) {
   // defensive
   if (!editor) return
+
+  // do not apply Parinfer if the change event did not originate from a key press
+  if (event && event.kind !== TextEditorSelectionChangeKind.Keyboard) {
+    return
+  }
 
   const state = editorStates.deref().get(editor)
 
   if (isRunState(state)) {
-    applyParinfer2(editor, event, state)
+    applyParinfer2(editor, event, state, opts)
   }
 }
 
