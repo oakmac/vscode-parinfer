@@ -2,7 +2,7 @@ const vscode = require('vscode')
 const window = vscode.window
 const StatusBarAlignment = vscode.StatusBarAlignment
 
-const util = require('./utils')
+const util = require('./util')
 const atom = util.atom
 const isString = util.isString
 

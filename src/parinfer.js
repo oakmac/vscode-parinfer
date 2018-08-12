@@ -2,7 +2,7 @@ const vscode = require('vscode')
 const Position = vscode.Position
 const Range = vscode.Range
 const Selection = vscode.Selection
-// const TextEditorSelectionChangeKind = vscode.TextEditorSelectionChangeKind
+
 const window = vscode.window
 const workspace = vscode.workspace
 
@@ -12,12 +12,8 @@ const editor2 = require('./editor')
 const editorStates = editor2.editorStates
 const getEditorRange = editor2.getEditorRange
 
-const util = require('./utils')
-const isString = util.isString
-// const findEndRow = util.findEndRow
-// const findStartRow = util.findStartRow
+const util = require('./util')
 const linesDiff = util.linesDiff
-// const splitLines = util.splitLines
 
 const messages = require('./messages')
 const parenModeFailedMsg = messages.parenModeFailedMsg
@@ -27,50 +23,48 @@ function disableParinfer (editor) {
   editorStates.update((states) => states.set(editor, 'DISABLED'))
 }
 
-function applyParinfer2 (editor, txt, opts, mode) {
+function applyParinfer2 (editor, inputText, opts, mode) {
   if (!opts) {
     opts = {}
   }
-
-  // console.log(txt)
-  // console.log(opts)
-  // console.log('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
 
   // FIXME: development hack
   if (mode === 'INDENT_MODE') {
     mode = 'SMART_MODE'
   }
 
-  const linesArr = txt.split('\n')
-
   // run Parinfer
   let result = null
-  if (mode === 'INDENT_MODE') result = parinfer.indentMode(txt, opts)
-  else if (mode === 'SMART_MODE') result = parinfer.smartMode(txt, opts)
-  else if (mode === 'PAREN_MODE') result = parinfer.parenMode(txt, opts)
+  if (mode === 'INDENT_MODE') result = parinfer.indentMode(inputText, opts)
+  else if (mode === 'SMART_MODE') result = parinfer.smartMode(inputText, opts)
+  else if (mode === 'PAREN_MODE') result = parinfer.parenMode(inputText, opts)
 
-  const parinferSuccess = result.success
-  const inferredText = parinferSuccess ? result.text : false
+  // exit if parinfer was not successful
+  // FIXME: I think there are some cases where we can show an error here?
+  if (!result.success) return
+
+  // exit if the text does not need to be changed
+  if (result.text === inputText) return
+
+  const currentCursor = editor.selection
+  const document = editor.document
+  const invalidRange = new Range(0, 0, document.lineCount + 5, 0)
+  const fullRange = document.validateRange(invalidRange)
   const undoOptions = {
     undoStopAfter: false,
     undoStopBefore: false
   }
+  const editPromise = editor.edit(function (editBuilder) {
+    editBuilder.replace(fullRange, result.text)
+  }, undoOptions)
 
-  if (isString(inferredText) && inferredText !== txt) {
-    editor.edit(function (edit) {
-      edit.replace(
-        new Range(new Position(0, 0), new Position(linesArr.length - 1, 0)),
-        inferredText
-      )
-    }, undoOptions)
-      .then(function (applied) {
-        if (applied) {
-          const cursor = editor.selection.active
-          const nextCursor = cursor.with(cursor.line, result.cursorX)
-          editor.selection = new Selection(nextCursor, nextCursor)
-        }
-      })
-  }
+  editPromise.then(function (editWasApplied) {
+    if (editWasApplied) {
+      const newCursorPosition = new Position(result.cursorLine, result.cursorX)
+      const nextCursor = new Selection(currentCursor.anchor, newCursorPosition)
+      editor.selection = nextCursor // new Selection(nextCursor, nextCursor)
+    }
+  })
 }
 
 function isRunState (state) {
@@ -82,11 +76,6 @@ function isRunState (state) {
 function applyParinfer (editor, text, opts) {
   // defensive
   if (!editor) return
-
-  // // do not apply Parinfer if the change event did not originate from a key press
-  // if (event && event.kind !== TextEditorSelectionChangeKind.Keyboard) {
-  //   return
-  // }
 
   const state = editorStates.deref().get(editor)
 

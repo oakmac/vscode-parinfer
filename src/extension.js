@@ -7,11 +7,70 @@ const editor = require('./editor')
 const editorStates = editor.editorStates
 
 const parinfer2 = require('./parinfer')
-const utils = require('./utils')
-const getOldText = utils.getOldText
+const util = require('./util')
+const getOldText = util.getOldText
 
 // -----------------------------------------------------------------------------
-// Activate
+// Constants
+// -----------------------------------------------------------------------------
+
+const documentChangeEvent = 'DOCUMENT_CHANGE'
+const selectionChangeEvent = 'SELECTION_CHANGE'
+
+// -----------------------------------------------------------------------------
+// Events Queue
+// -----------------------------------------------------------------------------
+
+// FIXME: the events queue needs to be cleared out when the editor changes
+// FIXME: need documentation for how the eventsQueue works
+let eventsQueue = []
+
+const eventsQueueMaxLength = 10
+
+function cleanUpEventsQueue () {
+  if (eventsQueue.length > eventsQueueMaxLength) {
+    eventsQueue.length = eventsQueueMaxLength
+  }
+}
+
+setInterval(cleanUpEventsQueue, 1000)
+
+function processEventQueue () {
+  // defensive: this should happen
+  if (eventsQueue.length === 0) return
+
+  // FIXME: do nothing here if the events in this queue are not for the current editor
+  // another approach: empty the queue when switching editors
+
+  const editor = window.activeTextEditor
+  const txt = eventsQueue[0].txt
+
+  // FIXME: need to add selectionStartLine here
+  let options = {
+    cursorLine: eventsQueue[0].cursorLine,
+    cursorX: eventsQueue[0].cursorX
+  }
+
+  // check the last two events for previous cursor information
+  if (eventsQueue[1] && eventsQueue[1].cursorLine) {
+    options.prevCursorLine = eventsQueue[1].cursorLine
+    options.prevCursorX = eventsQueue[1].cursorX
+  } else if (eventsQueue[2] && eventsQueue[2].cursorLine) {
+    options.prevCursorLine = eventsQueue[2].cursorLine
+    options.prevCursorX = eventsQueue[2].cursorX
+  }
+
+  // "document change" events always fire first followed immediately by a "selection change" event
+  // try to grab the changes from the most recent document change event
+  if (eventsQueue[1] && eventsQueue[1].type === documentChangeEvent && eventsQueue[1].changes) {
+    options.changes = eventsQueue[1].changes
+  }
+
+  parinfer2.applyParinfer(editor, txt, options)
+}
+
+// -----------------------------------------------------------------------------
+// Events
 // -----------------------------------------------------------------------------
 
 function onChangeEditorStates (states) {
@@ -44,18 +103,8 @@ function activatePane (editor) {
   }
 }
 
-// FIXME: the events queue needs to be cleared out when the editor changes
-let eventQueue = []
-
-function cleanUpEventsQueue () {
-  if (eventQueue.length > 10) {
-    eventQueue.length = 10
-  }
-}
-
-setInterval(cleanUpEventsQueue, 1000)
-
-function vscodeChangeToParinferChange (oldTxt, changeEvt) {
+// convert VS Code change object to the format Parinfer expects
+function convertChangeObjects (oldTxt, changeEvt) {
   return {
     lineNo: changeEvt.range.start.line,
     newText: changeEvt.text,
@@ -64,63 +113,27 @@ function vscodeChangeToParinferChange (oldTxt, changeEvt) {
   }
 }
 
-function processEventQueue () {
-  // defensive: this should never happen
-  if (eventQueue.length === 0) return
-
-  // if (eventQueue[2]) {
-  //   console.log(eventQueue[2])
-  // }
-  // if (eventQueue[1]) {
-  //   console.log(eventQueue[1])
-  // }
-  // console.log(eventQueue[0])
-  // console.log('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
-
-  const editor = window.activeTextEditor
-  const txt = eventQueue[0].txt
-
-  let options = {
-    cursorLine: eventQueue[0].cursorLine,
-    cursorX: eventQueue[0].cursorX
-  }
-
-  // previous cursor
-  if (eventQueue[1] && eventQueue[1].cursorLine) {
-    options.prevCursorLine = eventQueue[1].cursorLine
-    options.prevCursorX = eventQueue[1].cursorX
-  } else if (eventQueue[2] && eventQueue[2].cursorLine) {
-    options.prevCursorLine = eventQueue[2].cursorLine
-    options.prevCursorX = eventQueue[2].cursorX
-  }
-
-  // changes
-  if (eventQueue[1] && eventQueue[1].type === 'DOCUMENT_CHANGE' && eventQueue[1].changes) {
-    options.changes = eventQueue[1].changes
-  }
-
-  parinfer2.applyParinfer(editor, txt, options)
-}
-
 function onChangeTextDocument (evt) {
-  // the first event to a document does not contain any changes; drop it
+  // drop any events that do not contain document changes
+  // (usually the first event to a document)
   if (evt.contentChanges && evt.contentChanges.length === 0) {
     return
   }
 
   let parinferEvent = {
     txt: evt.document.getText(),
-    type: 'DOCUMENT_CHANGE'
+    type: documentChangeEvent
   }
 
   // only create a "changes" property if we have a prior event
-  if (eventQueue[0] && eventQueue[0].txt) {
-    const prevTxt = eventQueue[0].txt
-    const convertFn = vscodeChangeToParinferChange.bind(null, prevTxt)
+  if (eventsQueue[0] && eventsQueue[0].txt) {
+    const prevTxt = eventsQueue[0].txt
+    const convertFn = convertChangeObjects.bind(null, prevTxt)
     parinferEvent.changes = evt.contentChanges.map(convertFn)
   }
 
-  eventQueue.unshift(parinferEvent)
+  // put this event on the queue
+  eventsQueue.unshift(parinferEvent)
 }
 
 function onChangeSelection (evt) {
@@ -129,12 +142,19 @@ function onChangeSelection (evt) {
     cursorLine: evt.selections[0].active.line,
     cursorX: evt.selections[0].active.character,
     txt: editor.document.getText(),
-    type: 'CURSOR_CHANGE'
+    type: selectionChangeEvent
   }
 
-  eventQueue.unshift(parinferEvent)
+  // put this event on the queue
+  eventsQueue.unshift(parinferEvent)
+
+  // process the queue after every "selection change" event
   processEventQueue()
 }
+
+// -----------------------------------------------------------------------------
+// Plugin Activation
+// -----------------------------------------------------------------------------
 
 // runs when the extension is activated
 function activate (context) {
@@ -155,10 +175,6 @@ function activate (context) {
     vscode.commands.registerCommand('parinfer.disable', () => {
       parinfer2.disableParinfer(window.activeTextEditor)
     }),
-    // window.onDidChangeTextEditorSelection((event) => {
-    //   parinfer2.applyParinfer(window.activeTextEditor, event)
-    // }),
-    // window.onDidChangeTextEditorSelection(onChangeSelection),
     window.onDidChangeActiveTextEditor(activatePane)
   )
 }

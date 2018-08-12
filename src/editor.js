@@ -2,9 +2,9 @@ const vscode = require('vscode')
 const Position = vscode.Position
 const Range = vscode.Range
 
-const utils = require('./utils')
+const util = require('./util')
 
-const editorStates = utils.atom(new WeakMap())
+const editorStates = util.atom(new WeakMap())
 
 function getEditorRange (editor) {
   const line = editor.document.lineCount - 1
