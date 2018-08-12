@@ -1,17 +1,21 @@
 {
   "name": "vscode-parinfer",
-  "displayName": "Parinfer",
-  "description": "Parinfer for VS Code",
   "version": "0.6.1",
+  "displayName": "Parinfer",
+  "description": "Automatically infer closing parens based on indentation. An essential tool for writing Lisp code.",
+  "categories": ["Other"],
+  "keywords": ["lisp", "clojure", "clojureScript", "parinfer", "paredit"],
   "publisher": "shaunlebron",
   "icon": "icon.png",
-  "engines": {
-    "vscode": "^1.0.0"
-  },
   "repository": {
     "type": "git",
     "url": "https://github.com/shaunlebron/vscode-parinfer"
   },
+  "license": "MIT",
+  "engines": {
+    "vscode": "^1.0.0"
+  },
+  "main": "./src/extension.js",
   "activationEvents": [
     "onLanguage:clojure",
     "onLanguage:lisp",
@@ -19,7 +23,6 @@
     "onLanguage:racket",
     "onLanguage:extempore"
   ],
-  "main": "./src/extension.js",
   "contributes": {
     "configuration": {
       "type": "object",
@@ -68,6 +71,6 @@
   },
   "devDependencies": {
     "standard": "11.0.1"
-  },
-  "license": "MIT"
+  }
+
 }
