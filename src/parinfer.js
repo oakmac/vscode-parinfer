@@ -32,6 +32,10 @@ function applyParinfer2 (editor, txt, opts, mode) {
     opts = {}
   }
 
+  // console.log(txt)
+  // console.log(opts)
+  // console.log('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
+
   // FIXME: development hack
   if (mode === 'INDENT_MODE') {
     mode = 'SMART_MODE'

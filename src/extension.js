@@ -8,7 +8,7 @@ const editorStates = editor.editorStates
 
 const parinfer2 = require('./parinfer')
 const utils = require('./utils')
-const getTextFromRange = utils.getTextFromRange
+const getOldText = utils.getOldText
 
 // -----------------------------------------------------------------------------
 // Activate
@@ -44,43 +44,22 @@ function activatePane (editor) {
   }
 }
 
-// FIXME: the changes queue needs to be cleared out when the editor changes
+// FIXME: the events queue needs to be cleared out when the editor changes
 let eventQueue = []
 
-function cleanUpChangesQueue () {
+function cleanUpEventsQueue () {
   if (eventQueue.length > 10) {
     eventQueue.length = 10
   }
 }
 
-setInterval(cleanUpChangesQueue, 1000)
-
-// function selectionHasChanged (evt) {
-//   // const editor = window.activeTextEditor
-//   const editor = evt.textEditor
-//   const document = editor.document
-//
-//   const change = {
-//     selections: editor.selections,
-//     txt: document.getText()
-//   }
-//
-//   eventQueue.unshift(change)
-//
-//   const opts = {
-//     changes: getChangesArray(),
-//     prevCursorLine: getPreviousCursorLine(),
-//     prevCursorX: getPreviousCursorX()
-//   }
-//
-//   parinfer2.applyParinfer(editor, evt, opts)
-// }
+setInterval(cleanUpEventsQueue, 1000)
 
 function vscodeChangeToParinferChange (oldTxt, changeEvt) {
   return {
     lineNo: changeEvt.range.start.line,
     newText: changeEvt.text,
-    oldText: getTextFromRange(oldTxt, changeEvt.range),
+    oldText: getOldText(oldTxt, changeEvt.range, changeEvt.rangeLength),
     x: changeEvt.range.start.character
   }
 }
@@ -119,8 +98,6 @@ function processEventQueue () {
   if (eventQueue[1] && eventQueue[1].type === 'DOCUMENT_CHANGE' && eventQueue[1].changes) {
     options.changes = eventQueue[1].changes
   }
-
-  // console.log(options)
 
   parinfer2.applyParinfer(editor, txt, options)
 }
