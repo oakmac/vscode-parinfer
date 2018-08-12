@@ -2,7 +2,7 @@ const vscode = require('vscode')
 const Position = vscode.Position
 const Range = vscode.Range
 const Selection = vscode.Selection
-const TextEditorSelectionChangeKind = vscode.TextEditorSelectionChangeKind
+// const TextEditorSelectionChangeKind = vscode.TextEditorSelectionChangeKind
 const window = vscode.window
 const workspace = vscode.workspace
 
@@ -14,10 +14,10 @@ const getEditorRange = editor2.getEditorRange
 
 const util = require('./utils')
 const isString = util.isString
-const findEndRow = util.findEndRow
-const findStartRow = util.findStartRow
+// const findEndRow = util.findEndRow
+// const findStartRow = util.findStartRow
 const linesDiff = util.linesDiff
-const splitLines = util.splitLines
+// const splitLines = util.splitLines
 
 const messages = require('./messages')
 const parenModeFailedMsg = messages.parenModeFailedMsg
@@ -27,25 +27,7 @@ function disableParinfer (editor) {
   editorStates.update((states) => states.set(editor, 'DISABLED'))
 }
 
-// Parinfer Smart mode needs:
-// - input text
-// - cursorLine
-// - cursorX
-// - prevCursorLine
-// - prevCursorX
-// - selectionStartLine - first line of the current selection
-// - changes array
-//   - lineNo
-//   - x
-//   - oldText
-//   - newText
-// - forceBalance
-// - partialResult
-
-let prevCursorLine = null
-let prevCursorX = null
-
-function applyParinfer2 (editor, event, mode, opts) {
+function applyParinfer2 (editor, txt, opts, mode) {
   if (!opts) {
     opts = {}
   }
@@ -55,35 +37,13 @@ function applyParinfer2 (editor, event, mode, opts) {
     mode = 'SMART_MODE'
   }
 
-  const currentText = editor.document.getText()
-  const lines = splitLines(currentText)
-
-  if (lines[lines.length - 1] !== '') {
-    lines.push('')
-  }
-
-  const cursor = event ? event.selections[0].active : editor.selection.active
-  const line = cursor.line
-  // const startRow = findStartRow(lines, line)
-  // const endRow = findEndRow(lines, line)
-  const startRow = 0
-  const endRow = lines.length - 1
-  opts.cursorLine = line - startRow
-  opts.cursorX = cursor.character
-
-  // const opts = {
-  //   changes: changes,
-  //   cursorLine: line - startRow,
-  //   cursorX: cursor.character
-  // }
-  const linesToInfer = lines.slice(startRow, endRow)
-  const textToInfer = linesToInfer.join('\n') + '\n'
+  const linesArr = txt.split('\n')
 
   // run Parinfer
   let result = null
-  if (mode === 'INDENT_MODE') result = parinfer.indentMode(textToInfer, opts)
-  else if (mode === 'SMART_MODE') result = parinfer.smartMode(textToInfer, opts)
-  else if (mode === 'PAREN_MODE') result = parinfer.parenMode(textToInfer, opts)
+  if (mode === 'INDENT_MODE') result = parinfer.indentMode(txt, opts)
+  else if (mode === 'SMART_MODE') result = parinfer.smartMode(txt, opts)
+  else if (mode === 'PAREN_MODE') result = parinfer.parenMode(txt, opts)
 
   const parinferSuccess = result.success
   const inferredText = parinferSuccess ? result.text : false
@@ -92,10 +52,10 @@ function applyParinfer2 (editor, event, mode, opts) {
     undoStopBefore: false
   }
 
-  if (isString(inferredText) && inferredText !== textToInfer) {
+  if (isString(inferredText) && inferredText !== txt) {
     editor.edit(function (edit) {
       edit.replace(
-        new Range(new Position(startRow, 0), new Position(endRow, 0)),
+        new Range(new Position(0, 0), new Position(linesArr.length - 1, 0)),
         inferredText
       )
     }, undoOptions)
@@ -115,19 +75,19 @@ function isRunState (state) {
          state === 'PAREN_MODE'
 }
 
-function applyParinfer (editor, event, opts) {
+function applyParinfer (editor, text, opts) {
   // defensive
   if (!editor) return
 
-  // do not apply Parinfer if the change event did not originate from a key press
-  if (event && event.kind !== TextEditorSelectionChangeKind.Keyboard) {
-    return
-  }
+  // // do not apply Parinfer if the change event did not originate from a key press
+  // if (event && event.kind !== TextEditorSelectionChangeKind.Keyboard) {
+  //   return
+  // }
 
   const state = editorStates.deref().get(editor)
 
   if (isRunState(state)) {
-    applyParinfer2(editor, event, state, opts)
+    applyParinfer2(editor, text, opts, state)
   }
 }
 

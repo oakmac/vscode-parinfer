@@ -106,10 +106,42 @@ function linesDiff (textA, textB) {
   }, initialCount)
 }
 
+function getTextFromRange (txt, range) {
+  let firstLine = range.start.line
+  let firstChar = range.start.character
+  let lastLine = range.end.line
+  let lastChar = range.end.character
+
+  let newLines = txt.split('\n')
+  let x = 0
+  while (x < firstLine) {
+    newLines.shift()
+    x++
+  }
+  newLines[0] = newLines[0].substring(firstChar)
+  const numLines = lastLine - firstLine + 1
+  while (newLines.length > numLines) {
+    newLines.pop()
+  }
+  const lastIdx = newLines.length - 1
+  newLines[lastIdx] = newLines[lastIdx].substring(0, lastChar)
+
+  return newLines.join('\n')
+}
+
+// console.assert(getTextFromRange('', [{line: 0, character: 0}, {line: 0, character: 0}]) === '')
+// console.assert(getTextFromRange('     ', [{line: 0, character: 2}, {line: 0, character: 5}]) === '   ')
+// console.assert(getTextFromRange('abcdef', [{line: 0, character: 0}, {line: 0, character: 2}]) === 'ab')
+// console.assert(getTextFromRange('abcdef\nabcdef', [{line: 0, character: 3}, {line: 1, character: 3}]) === 'def\nabc')
+// console.assert(getTextFromRange('abcdef\nabcdef', [{line: 0, character: 3}, {line: 0, character: 5}]) === 'def')
+// console.assert(getTextFromRange('abcdef\nabcdef', [{line: 1, character: 2}, {line: 1, character: 5}]) === 'cdef')
+// console.assert(getTextFromRange('abcdef\nabcdef\nabcdef\nabcdef\n', [{line: 3, character: 1}, {line: 1, character: 2}]) === 'cdef\nabcdef\na')
+
 exports.atom = atom
 exports.debounce = debounce
 exports.findEndRow = findEndRow
 exports.findStartRow = findStartRow
+exports.getTextFromRange = getTextFromRange
 exports.isParentExprLine = isParentExprLine
 exports.isString = isString
 exports.linesDiff = linesDiff

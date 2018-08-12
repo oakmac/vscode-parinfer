@@ -7,6 +7,8 @@ const editor = require('./editor')
 const editorStates = editor.editorStates
 
 const parinfer2 = require('./parinfer')
+const utils = require('./utils')
+const getTextFromRange = utils.getTextFromRange
 
 // -----------------------------------------------------------------------------
 // Activate
@@ -19,7 +21,8 @@ function onChangeEditorStates (states) {
   if (editor && currentEditorState) {
     statusBar.updateStatusBar(currentEditorState)
     if (currentEditorState === 'INDENT_MODE' || currentEditorState === 'PAREN_MODE') {
-      parinfer2.applyParinfer(editor, null)
+      const txt = editor.document.getText()
+      parinfer2.applyParinfer(editor, txt, {})
     }
   } else if (editor) {
     statusBar.updateStatusBar(null)
@@ -42,11 +45,11 @@ function activatePane (editor) {
 }
 
 // FIXME: the changes queue needs to be cleared out when the editor changes
-let changesQueue = []
+let eventQueue = []
 
 function cleanUpChangesQueue () {
-  if (changesQueue.length > 10) {
-    changesQueue.length = 10
+  if (eventQueue.length > 10) {
+    eventQueue.length = 10
   }
 }
 
@@ -62,7 +65,7 @@ setInterval(cleanUpChangesQueue, 1000)
 //     txt: document.getText()
 //   }
 //
-//   changesQueue.unshift(change)
+//   eventQueue.unshift(change)
 //
 //   const opts = {
 //     changes: getChangesArray(),
@@ -73,37 +76,6 @@ setInterval(cleanUpChangesQueue, 1000)
 //   parinfer2.applyParinfer(editor, evt, opts)
 // }
 
-function getTextFromRange (txt, range) {
-  let firstLine = range.start.line
-  let firstChar = range.start.character
-  let lastLine = range.end.line
-  let lastChar = range.end.character
-
-  let newLines = txt.split('\n')
-  let x = 0
-  while (x < firstLine) {
-    newLines.shift()
-    x++
-  }
-  newLines[0] = newLines[0].substring(firstChar)
-  const numLines = lastLine - firstLine + 1
-  while (newLines.length > numLines) {
-    newLines.pop()
-  }
-  const lastIdx = newLines.length - 1
-  newLines[lastIdx] = newLines[lastIdx].substring(0, lastChar)
-
-  return newLines.join('\n')
-}
-
-// console.assert(getTextFromRange('', [{line: 0, character: 0}, {line: 0, character: 0}]) === '')
-// console.assert(getTextFromRange('     ', [{line: 0, character: 2}, {line: 0, character: 5}]) === '   ')
-// console.assert(getTextFromRange('abcdef', [{line: 0, character: 0}, {line: 0, character: 2}]) === 'ab')
-// console.assert(getTextFromRange('abcdef\nabcdef', [{line: 0, character: 3}, {line: 1, character: 3}]) === 'def\nabc')
-// console.assert(getTextFromRange('abcdef\nabcdef', [{line: 0, character: 3}, {line: 0, character: 5}]) === 'def')
-// console.assert(getTextFromRange('abcdef\nabcdef', [{line: 1, character: 2}, {line: 1, character: 5}]) === 'cdef')
-// console.assert(getTextFromRange('abcdef\nabcdef\nabcdef\nabcdef\n', [{line: 3, character: 1}, {line: 1, character: 2}]) === 'cdef\nabcdef\na')
-
 function vscodeChangeToParinferChange (oldTxt, changeEvt) {
   return {
     lineNo: changeEvt.range.start.line,
@@ -113,15 +85,44 @@ function vscodeChangeToParinferChange (oldTxt, changeEvt) {
   }
 }
 
-function processQueue () {
-  if (changesQueue[2]) {
-    console.log(changesQueue[2])
+function processEventQueue () {
+  // defensive: this should never happen
+  if (eventQueue.length === 0) return
+
+  // if (eventQueue[2]) {
+  //   console.log(eventQueue[2])
+  // }
+  // if (eventQueue[1]) {
+  //   console.log(eventQueue[1])
+  // }
+  // console.log(eventQueue[0])
+  // console.log('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
+
+  const editor = window.activeTextEditor
+  const txt = eventQueue[0].txt
+
+  let options = {
+    cursorLine: eventQueue[0].cursorLine,
+    cursorX: eventQueue[0].cursorX
   }
-  if (changesQueue[1]) {
-    console.log(changesQueue[1])
+
+  // previous cursor
+  if (eventQueue[1] && eventQueue[1].cursorLine) {
+    options.prevCursorLine = eventQueue[1].cursorLine
+    options.prevCursorX = eventQueue[1].cursorX
+  } else if (eventQueue[2] && eventQueue[2].cursorLine) {
+    options.prevCursorLine = eventQueue[2].cursorLine
+    options.prevCursorX = eventQueue[2].cursorX
   }
-  console.log(changesQueue[0])
-  console.log('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
+
+  // changes
+  if (eventQueue[1] && eventQueue[1].type === 'DOCUMENT_CHANGE' && eventQueue[1].changes) {
+    options.changes = eventQueue[1].changes
+  }
+
+  // console.log(options)
+
+  parinfer2.applyParinfer(editor, txt, options)
 }
 
 function onChangeTextDocument (evt) {
@@ -136,13 +137,13 @@ function onChangeTextDocument (evt) {
   }
 
   // only create a "changes" property if we have a prior event
-  if (changesQueue[0] && changesQueue[0].txt) {
-    const prevTxt = changesQueue[0].txt
+  if (eventQueue[0] && eventQueue[0].txt) {
+    const prevTxt = eventQueue[0].txt
     const convertFn = vscodeChangeToParinferChange.bind(null, prevTxt)
     parinferEvent.changes = evt.contentChanges.map(convertFn)
   }
 
-  changesQueue.unshift(parinferEvent)
+  eventQueue.unshift(parinferEvent)
 }
 
 function onChangeSelection (evt) {
@@ -154,8 +155,8 @@ function onChangeSelection (evt) {
     type: 'CURSOR_CHANGE'
   }
 
-  changesQueue.unshift(parinferEvent)
-  processQueue()
+  eventQueue.unshift(parinferEvent)
+  processEventQueue()
 }
 
 // runs when the extension is activated
