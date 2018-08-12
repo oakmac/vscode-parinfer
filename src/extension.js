@@ -9,6 +9,8 @@ const editorStates = editor.editorStates
 const parinfer2 = require('./parinfer')
 const util = require('./util')
 
+const config = require('./config')
+
 // -----------------------------------------------------------------------------
 // Constants
 // -----------------------------------------------------------------------------
@@ -90,30 +92,55 @@ function processEventsQueue () {
 // -----------------------------------------------------------------------------
 
 function onChangeEditorStates (states) {
-  const editor = window.activeTextEditor
-  const currentEditorState = states.get(editor)
+  const activeEditor = window.activeTextEditor
 
-  if (editor && currentEditorState) {
+  // defensive
+  if (!activeEditor) return
+
+  const currentEditorState = states.get(activeEditor)
+
+  if (currentEditorState) {
     statusBar.updateStatusBar(currentEditorState)
-    if (currentEditorState === 'INDENT_MODE' || currentEditorState === 'PAREN_MODE') {
-      const txt = editor.document.getText()
-      parinfer2.applyParinfer(editor, txt, {})
+    if (util.isRunState(currentEditorState)) {
+      const txt = activeEditor.document.getText()
+      parinfer2.applyParinfer(activeEditor, txt, {})
     }
-  } else if (editor) {
+  } else {
     statusBar.updateStatusBar(null)
   }
 }
 
 editorStates.addWatch(onChangeEditorStates)
 
-function toggleMode (editor) {
-  editorStates.update((states) => {
-    const nextState = states.get(editor) === 'PAREN_MODE' ? 'INDENT_MODE' : 'PAREN_MODE'
-    return states.set(editor, nextState)
+function disableParinfer (activeEditor) {
+  editorStates.update(function (states) {
+    return states.set(activeEditor, 'DISABLED')
   })
 }
 
-function activatePane (editor) {
+function toggleMode (activeEditor) {
+  editorStates.update(function (states) {
+    const currentState = states.get(activeEditor)
+
+    let nextState = 'PAREN_MODE'
+    if (currentState === 'DISABLED' && config.useSmartMode) {
+      nextState = 'SMART_MODE'
+    } else if (currentState === 'DISABLED' && !config.useSmartMode) {
+      nextState = 'INDENT_MODE'
+    } else if (currentState === 'PAREN_MODE' && config.useSmartMode) {
+      nextState = 'SMART_MODE'
+    } else if (currentState === 'PAREN_MODE' && !config.useSmartMode) {
+      nextState = 'INDENT_MODE'
+    }
+
+    return states.set(activeEditor, nextState)
+  })
+}
+
+function onChangeActiveEditor (editor) {
+  // clear out the eventsQueue when we switch editor tabs
+  eventsQueue = []
+
   if (editor) {
     parinfer2.helloEditor(editor)
   }
@@ -179,15 +206,8 @@ function onChangeSelection (evt) {
 // Plugin Activation
 // -----------------------------------------------------------------------------
 
-// runs when the extension is activated
-function activate (context) {
-  // TODO: put the version here
-  console.log('vscode-parinfer activated')
-
-  statusBar.initStatusBar('parinfer.toggleMode')
-
-  activatePane(window.activeTextEditor)
-
+function addEvents (context) {
+  vscode.window.onDidChangeActiveTextEditor(onChangeActiveEditor)
   vscode.window.onDidChangeTextEditorSelection(onChangeSelection)
   vscode.workspace.onDidChangeTextDocument(onChangeTextDocument)
 
@@ -196,10 +216,19 @@ function activate (context) {
       toggleMode(window.activeTextEditor)
     }),
     vscode.commands.registerCommand('parinfer.disable', () => {
-      parinfer2.disableParinfer(window.activeTextEditor)
-    }),
-    window.onDidChangeActiveTextEditor(activatePane)
+      disableParinfer(window.activeTextEditor)
+    })
   )
+}
+
+// runs when the extension is activated
+function activate (context) {
+  // TODO: put the version here
+  console.log('vscode-parinfer activated')
+
+  addEvents(context)
+  statusBar.initStatusBar('parinfer.toggleMode')
+  onChangeActiveEditor(window.activeTextEditor)
 }
 
 exports.activate = activate

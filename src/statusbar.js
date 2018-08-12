@@ -34,7 +34,7 @@ function setStatusIndicator (statusBarItem, state) {
 
   statusBarItem.text = `$(code) ${modeTxt}`
   statusBarItem.color = enabledColor
-  statusBarItem.tooltip = `Parinfer is in ${modeTxt} mode`
+  statusBarItem.tooltip = `Parinfer is in ${modeTxt} Mode`
 }
 
 function updateStatusBar (state) {

@@ -13,15 +13,16 @@ const editorStates = editor2.editorStates
 const getEditorRange = editor2.getEditorRange
 
 const util = require('./util')
-const linesDiff = util.linesDiff
 
 const messages = require('./messages')
 const parenModeFailedMsg = messages.parenModeFailedMsg
 const parenModeChangedFileMsg = messages.parenModeChangedFileMsg
 
-function disableParinfer (editor) {
-  editorStates.update((states) => states.set(editor, 'DISABLED'))
-}
+const config = require('./config')
+
+// -----------------------------------------------------------------------------
+// Parinfer Application
+// -----------------------------------------------------------------------------
 
 const logParinferInput = false
 const logParinferOutput = false
@@ -35,11 +36,6 @@ function applyParinfer2 (editor, inputText, opts, mode) {
     console.log(inputText)
     console.log(opts)
     console.log('~~~~~~~~~~~~~~~~ parinfer input ~~~~~~~~~~~~~~~~')
-  }
-
-  // FIXME: development hack
-  if (mode === 'INDENT_MODE') {
-    mode = 'SMART_MODE'
   }
 
   // run Parinfer
@@ -82,19 +78,13 @@ function applyParinfer2 (editor, inputText, opts, mode) {
   })
 }
 
-function isRunState (state) {
-  return state === 'INDENT_MODE' ||
-         state === 'SMART_MODE' ||
-         state === 'PAREN_MODE'
-}
-
 function applyParinfer (editor, text, opts) {
   // defensive
   if (!editor) return
 
   const state = editorStates.deref().get(editor)
 
-  if (isRunState(state)) {
+  if (util.isRunState(state)) {
     applyParinfer2(editor, text, opts, state)
   }
 }
@@ -107,7 +97,7 @@ function helloEditor2 (editor) {
   const parenModeResult = parinfer.parenMode(currentText)
   const parenModeSucceeded = parenModeResult.success === true
   const parenModeText = parenModeResult.text
-  const textDelta = linesDiff(currentText, parenModeText)
+  const textDelta = util.linesDiff(currentText, parenModeText)
   const parenModeChangedFile = parenModeSucceeded && textDelta.diff !== 0
 
   if (!parenModeSucceeded && showOpenFileDialog) {
@@ -126,14 +116,16 @@ function helloEditor2 (editor) {
           editor.edit((edit) => {
             edit.replace(getEditorRange(editor), parenModeText)
           })
-          editorStates.update((states) => states.set(editor, 'INDENT_MODE'))
+          const activeState = config.useSmartMode ? 'SMART_MODE' : 'INDENT_MODE'
+          editorStates.update((states) => states.set(editor, activeState))
         }
       })
   } else if (parenModeChangedFile && !showOpenFileDialog) {
     editor.edit((edit) => {
       edit.replace(getEditorRange(editor), parenModeText)
     })
-    editorStates.update((states) => states.set(editor, 'INDENT_MODE'))
+    const activeState = config.useSmartMode ? 'SMART_MODE' : 'INDENT_MODE'
+    editorStates.update((states) => states.set(editor, activeState))
   } else {
     let defaultMode = workspace.getConfiguration('parinfer').get('defaultMode')
     editorStates.update((states) => states.set(editor, defaultMode))
@@ -169,5 +161,4 @@ function helloEditor (editor) {
 }
 
 exports.applyParinfer = applyParinfer
-exports.disableParinfer = disableParinfer
 exports.helloEditor = helloEditor

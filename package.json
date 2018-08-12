@@ -31,12 +31,18 @@
         "parinfer.defaultMode": {
           "type": "string",
           "enum": [
+            "SMART_MODE",
             "INDENT_MODE",
             "PAREN_MODE",
             "DISABLED"
           ],
-          "default": "INDENT_MODE",
+          "default": "SMART_MODE",
           "description": "The default mode to be used when opening a new file."
+        },
+        "parinfer.useSmartMode": {
+          "type": "boolean",
+          "default": true,
+          "description": "Use Smart Mode instead of Indent Mode."
         }
       }
     },

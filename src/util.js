@@ -110,12 +110,19 @@ function getTextFromRange (txt, range, length) {
   return line.substring(firstChar, firstChar + length)
 }
 
+function isRunState (state) {
+  return state === 'INDENT_MODE' ||
+         state === 'SMART_MODE' ||
+         state === 'PAREN_MODE'
+}
+
 exports.atom = atom
 exports.findEndRow = findEndRow
 exports.findStartRow = findStartRow
 exports.getTextFromRange = getTextFromRange
 exports.isParentExprLine = isParentExprLine
 exports.isString = isString
+exports.isRunState = isRunState
 exports.linesDiff = linesDiff
 exports.map = map
 exports.splitLines = splitLines
