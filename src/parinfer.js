@@ -54,13 +54,11 @@ function applyParinfer2 (editor, inputText, opts, mode) {
   // exit if the text does not need to be changed
   if (result.text === inputText) return
 
-  // const document = editor.document
-  // const invalidRange = new Range(0, 0, document.lineCount + 5, 0)
-  // const fullDocumentRange = document.validateRange(invalidRange)
   const undoOptions = {
     undoStopAfter: false,
     undoStopBefore: false
   }
+
   const editPromise = editor.edit(function (editBuilder) {
     editBuilder.replace(editorModule.getEditorRange(editor), result.text)
   }, undoOptions)
