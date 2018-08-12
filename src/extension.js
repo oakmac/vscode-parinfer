@@ -45,6 +45,12 @@ function processEventsQueue () {
   if (eventsQueue.length === 0) return
   if (eventsQueue[0].type !== selectionChangeEvent) return
 
+  const activeEditor = window.activeTextEditor
+  const editorMode = editorStates.deref().get(activeEditor)
+
+  // exit if we are not in Smart, Indent, or Paren mode
+  if (!util.isRunState(editorMode)) return
+
   if (logEventsQueue) {
     if (eventsQueue[2]) console.log('2: ', eventsQueue[2])
     if (eventsQueue[1]) console.log('1: ', eventsQueue[1])
@@ -52,7 +58,6 @@ function processEventsQueue () {
     console.log('~~~~~~~~~~~~~~~~ eventsQueue ~~~~~~~~~~~~~~~~')
   }
 
-  const activeEditor = window.activeTextEditor
   const txt = eventsQueue[0].txt
 
   // cursor options
