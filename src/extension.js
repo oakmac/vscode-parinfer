@@ -23,8 +23,7 @@ const fiveSecondsMs = 5 * 1000
 // Events Queue
 // -----------------------------------------------------------------------------
 
-// FIXME: the events queue needs to be cleared out when the editor changes
-// FIXME: need documentation for how the eventsQueue works
+// TODO: need documentation for how the eventsQueue works
 let eventsQueue = []
 
 const eventsQueueMaxLength = 10
@@ -88,7 +87,7 @@ function processEventsQueue () {
 }
 
 // -----------------------------------------------------------------------------
-// Events
+// Change Editor State
 // -----------------------------------------------------------------------------
 
 function onChangeEditorStates (states) {
@@ -112,30 +111,9 @@ function onChangeEditorStates (states) {
 
 editorStates.addWatch(onChangeEditorStates)
 
-function disableParinfer (activeEditor) {
-  editorStates.update(function (states) {
-    return states.set(activeEditor, 'DISABLED')
-  })
-}
-
-function toggleMode (activeEditor) {
-  editorStates.update(function (states) {
-    const currentState = states.get(activeEditor)
-
-    let nextState = 'PAREN_MODE'
-    if (currentState === 'DISABLED' && config.useSmartMode) {
-      nextState = 'SMART_MODE'
-    } else if (currentState === 'DISABLED' && !config.useSmartMode) {
-      nextState = 'INDENT_MODE'
-    } else if (currentState === 'PAREN_MODE' && config.useSmartMode) {
-      nextState = 'SMART_MODE'
-    } else if (currentState === 'PAREN_MODE' && !config.useSmartMode) {
-      nextState = 'INDENT_MODE'
-    }
-
-    return states.set(activeEditor, nextState)
-  })
-}
+// -----------------------------------------------------------------------------
+// Events
+// -----------------------------------------------------------------------------
 
 function onChangeActiveEditor (editor) {
   // clear out the eventsQueue when we switch editor tabs
@@ -200,6 +178,35 @@ function onChangeSelection (evt) {
 
   // process the queue after every "selection change" event
   processEventsQueue()
+}
+
+// -----------------------------------------------------------------------------
+// Plugin Commands
+// -----------------------------------------------------------------------------
+
+function disableParinfer (activeEditor) {
+  editorStates.update(function (states) {
+    return states.set(activeEditor, 'DISABLED')
+  })
+}
+
+function toggleMode (activeEditor) {
+  editorStates.update(function (states) {
+    const currentState = states.get(activeEditor)
+
+    let nextState = 'PAREN_MODE'
+    if (currentState === 'DISABLED' && config.useSmartMode) {
+      nextState = 'SMART_MODE'
+    } else if (currentState === 'DISABLED' && !config.useSmartMode) {
+      nextState = 'INDENT_MODE'
+    } else if (currentState === 'PAREN_MODE' && config.useSmartMode) {
+      nextState = 'SMART_MODE'
+    } else if (currentState === 'PAREN_MODE' && !config.useSmartMode) {
+      nextState = 'INDENT_MODE'
+    }
+
+    return states.set(activeEditor, nextState)
+  })
 }
 
 // -----------------------------------------------------------------------------
