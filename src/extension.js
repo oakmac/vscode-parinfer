@@ -195,14 +195,12 @@ function toggleMode (activeEditor) {
     const currentState = states.get(activeEditor)
 
     let nextState = 'PAREN_MODE'
-    if (currentState === 'DISABLED' && config.useSmartMode) {
-      nextState = 'SMART_MODE'
-    } else if (currentState === 'DISABLED' && !config.useSmartMode) {
+    if (currentState === 'DISABLED' || currentState === 'PAREN_MODE') {
       nextState = 'INDENT_MODE'
-    } else if (currentState === 'PAREN_MODE' && config.useSmartMode) {
+    }
+
+    if (nextState === 'INDENT_MODE' && config.useSmartMode) {
       nextState = 'SMART_MODE'
-    } else if (currentState === 'PAREN_MODE' && !config.useSmartMode) {
-      nextState = 'INDENT_MODE'
     }
 
     return states.set(activeEditor, nextState)
