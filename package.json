@@ -1,75 +1,82 @@
 {
-    "name": "vscode-parinfer",
-    "displayName": "Parinfer",
-    "description": "Parinfer for VS Code",
-    "version": "0.6.1",
-    "publisher": "shaunlebron",
-    "icon": "icon.png",
-    "engines": {
-        "vscode": "0.10.x"
-    },
-    "repository": {
-        "type": "git",
-        "url": "https://github.com/shaunlebron/vscode-parinfer"
-    },
-    "activationEvents": [
-        "onLanguage:clojure",
-        "onLanguage:lisp",
-        "onLanguage:scheme",
-        "onLanguage:racket",
-        "onLanguage:extempore"        
-    ],
-    "main": "./out/extension",
-    "contributes": {
-        "configuration": {
-            "type": "object",
-            "title": "Parinfer",
-            "properties": {
-                "parinfer.defaultMode": {
-                    "type": "string",
-                    "enum": [
-                        "indent-mode",
-                        "paren-mode",
-                        "disabled"
-                    ],
-                    "default": "indent-mode",
-                    "description": "The default mode to be used when opening a new file."
-                }
-            }
+  "name": "vscode-parinfer",
+  "version": "0.6.1",
+  "displayName": "Parinfer",
+  "description": "Automatically infer closing parens based on indentation. An essential tool for writing Lisp code.",
+  "categories": ["Other"],
+  "keywords": ["lisp", "clojure", "clojureScript", "parinfer", "paredit"],
+  "publisher": "shaunlebron",
+  "icon": "icon.png",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/shaunlebron/vscode-parinfer"
+  },
+  "license": "MIT",
+  "engines": {
+    "vscode": "^1.0.0"
+  },
+  "main": "./src/extension.js",
+  "activationEvents": [
+    "onLanguage:clojure",
+    "onLanguage:lisp",
+    "onLanguage:scheme",
+    "onLanguage:racket",
+    "onLanguage:extempore"
+  ],
+  "contributes": {
+    "configuration": {
+      "type": "object",
+      "title": "Parinfer",
+      "properties": {
+        "parinfer.defaultMode": {
+          "type": "string",
+          "enum": [
+            "SMART_MODE",
+            "INDENT_MODE",
+            "PAREN_MODE",
+            "DISABLED"
+          ],
+          "default": "SMART_MODE",
+          "description": "The default mode to be used when opening a new file."
         },
-        "keybindings": [
-            {
-                "command": "parinfer.toggleMode",
-                "key": "Ctrl+8",
-                "mac": "Cmd+8"
-            },
-            {
-                "command": "parinfer.disable",
-                "key": "Ctrl+9",
-                "mac": "Cmd+9"
-            }
-        ],
-        "commands": [
-            {
-                "command": "parinfer.toggleMode",
-                "title": "Parinfer: Toggle Mode"
-            },
-            {
-                "command": "parinfer.disable",
-                "title": "Parinfer: Disable"
-            }
-        ]
+        "parinfer.useSmartMode": {
+          "type": "boolean",
+          "default": true,
+          "description": "Use Smart Mode instead of Indent Mode."
+        }
+      }
     },
-    "scripts": {
-        "vscode:prepublish": "tsc -p ./",
-        "compile": "tsc -watch -p ./"
-    },
-    "dependencies": {
-        "parinfer": "^2.0.0"
-    },
-    "devDependencies": {
-        "@types/node": "^6.0.51",
-        "typescript": "^2.0.10"
-    },
-    "license": "MIT"
+    "keybindings": [
+      {
+        "command": "parinfer.toggleMode",
+        "key": "ctrl+shift+9",
+        "mac": "cmd+shift+9"
+      },
+      {
+        "command": "parinfer.disable",
+        "key": "ctrl+shift+0",
+        "mac": "cmd+shift+0"
+      }
+    ],
+    "commands": [
+      {
+        "command": "parinfer.toggleMode",
+        "title": "Parinfer: Toggle Mode"
+      },
+      {
+        "command": "parinfer.disable",
+        "title": "Parinfer: Disable"
+      }
+    ]
+  },
+  "scripts": {
+    "format": "standard --fix src/*.js"
+  },
+  "dependencies": {
+    "parinfer": "3.12.0"
+  },
+  "devDependencies": {
+    "standard": "11.0.1"
+  }
+
 }
