@@ -49,13 +49,13 @@ function applyParinfer2 (editor, inputText, opts, mode) {
   const currentCursor = editor.selection
   const document = editor.document
   const invalidRange = new Range(0, 0, document.lineCount + 5, 0)
-  const fullRange = document.validateRange(invalidRange)
+  const fullDocumentRange = document.validateRange(invalidRange)
   const undoOptions = {
     undoStopAfter: false,
     undoStopBefore: false
   }
   const editPromise = editor.edit(function (editBuilder) {
-    editBuilder.replace(fullRange, result.text)
+    editBuilder.replace(fullDocumentRange, result.text)
   }, undoOptions)
 
   editPromise.then(function (editWasApplied) {

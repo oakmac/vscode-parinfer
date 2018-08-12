@@ -8,7 +8,6 @@ const editorStates = editor.editorStates
 
 const parinfer2 = require('./parinfer')
 const util = require('./util')
-const getOldText = util.getOldText
 
 // -----------------------------------------------------------------------------
 // Constants
@@ -16,6 +15,7 @@ const getOldText = util.getOldText
 
 const documentChangeEvent = 'DOCUMENT_CHANGE'
 const selectionChangeEvent = 'SELECTION_CHANGE'
+const fiveSecondsMs = 5 * 1000
 
 // -----------------------------------------------------------------------------
 // Events Queue
@@ -33,11 +33,13 @@ function cleanUpEventsQueue () {
   }
 }
 
-setInterval(cleanUpEventsQueue, 1000)
+setInterval(cleanUpEventsQueue, fiveSecondsMs)
 
-function processEventQueue () {
-  // defensive: this should happen
-  if (eventsQueue.length === 0) return
+function processEventsQueue () {
+  // defensive: these should never happen
+  if (eventsQueue.length === 0 || eventsQueue.type !== selectionChangeEvent) {
+    return
+  }
 
   // FIXME: do nothing here if the events in this queue are not for the current editor
   // another approach: empty the queue when switching editors
@@ -108,7 +110,7 @@ function convertChangeObjects (oldTxt, changeEvt) {
   return {
     lineNo: changeEvt.range.start.line,
     newText: changeEvt.text,
-    oldText: getOldText(oldTxt, changeEvt.range, changeEvt.rangeLength),
+    oldText: util.getTextFromRange(oldTxt, changeEvt.range, changeEvt.rangeLength),
     x: changeEvt.range.start.character
   }
 }
@@ -149,7 +151,7 @@ function onChangeSelection (evt) {
   eventsQueue.unshift(parinferEvent)
 
   // process the queue after every "selection change" event
-  processEventQueue()
+  processEventsQueue()
 }
 
 // -----------------------------------------------------------------------------

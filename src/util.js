@@ -38,14 +38,6 @@ function splitLines (text) {
   return text.split(/\n/)
 }
 
-function debounce (fn, interval) {
-  let tid
-  return (...args) => {
-    clearTimeout(tid)
-    tid = setTimeout(() => fn(...args), interval)
-  }
-}
-
 function isParentExprLine (line) {
   return isString(line) && line.match(/^\([a-zA-Z]/) !== null
 }
@@ -106,8 +98,7 @@ function linesDiff (textA, textB) {
   }, initialCount)
 }
 
-// FIXME: rename this
-function getOldText (txt, range, length) {
+function getTextFromRange (txt, range, length) {
   if (length === 0) return ''
 
   let firstLine = range.start.line
@@ -120,10 +111,9 @@ function getOldText (txt, range, length) {
 }
 
 exports.atom = atom
-exports.debounce = debounce
 exports.findEndRow = findEndRow
 exports.findStartRow = findStartRow
-exports.getOldText = getOldText
+exports.getTextFromRange = getTextFromRange
 exports.isParentExprLine = isParentExprLine
 exports.isString = isString
 exports.linesDiff = linesDiff
