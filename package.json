@@ -43,13 +43,13 @@
     "keybindings": [
       {
         "command": "parinfer.toggleMode",
-        "key": "Ctrl+8",
-        "mac": "Cmd+8"
+        "key": "ctrl+shift+9",
+        "mac": "cmd+shift+9"
       },
       {
         "command": "parinfer.disable",
-        "key": "Ctrl+9",
-        "mac": "Cmd+9"
+        "key": "ctrl+shift+0",
+        "mac": "cmd+shift+0"
       }
     ],
     "commands": [
