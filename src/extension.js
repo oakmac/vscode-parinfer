@@ -3,8 +3,8 @@ const window = vscode.window
 
 const statusBar = require('./statusbar')
 
-const editor = require('./editor')
-const editorStates = editor.editorStates
+const editorModule = require('./editor')
+const editorStates = editorModule.editorStates
 
 const parinfer2 = require('./parinfer')
 const util = require('./util')
@@ -15,6 +15,8 @@ const config = require('./config')
 // Constants
 // -----------------------------------------------------------------------------
 
+// TODO: how to pull this from the package.json file directly?
+const version = '0.6.1'
 const documentChangeEvent = 'DOCUMENT_CHANGE'
 const selectionChangeEvent = 'SELECTION_CHANGE'
 const fiveSecondsMs = 5 * 1000
@@ -42,9 +44,6 @@ function processEventsQueue () {
   // defensive: these should never happen
   if (eventsQueue.length === 0) return
   if (eventsQueue[0].type !== selectionChangeEvent) return
-
-  // FIXME: do nothing here if the events in this queue are not for the current editor
-  // another approach: empty the queue when switching editors
 
   if (logEventsQueue) {
     if (eventsQueue[2]) console.log('2: ', eventsQueue[2])
@@ -228,8 +227,7 @@ function addEvents (context) {
 
 // runs when the extension is activated
 function activate (context) {
-  // TODO: put the version here
-  console.log('vscode-parinfer activated')
+  console.log('vscode-parinfer ' + version + ' activated!')
 
   addEvents(context)
   statusBar.initStatusBar('parinfer.toggleMode')

@@ -1,6 +1,5 @@
 const vscode = require('vscode')
 const Position = vscode.Position
-const Range = vscode.Range
 const Selection = vscode.Selection
 
 const window = vscode.window
@@ -8,9 +7,8 @@ const workspace = vscode.workspace
 
 const parinfer = require('parinfer')
 
-const editor2 = require('./editor')
-const editorStates = editor2.editorStates
-const getEditorRange = editor2.getEditorRange
+const editorModule = require('./editor')
+const editorStates = editorModule.editorStates
 
 const util = require('./util')
 
@@ -56,15 +54,15 @@ function applyParinfer2 (editor, inputText, opts, mode) {
   // exit if the text does not need to be changed
   if (result.text === inputText) return
 
-  const document = editor.document
-  const invalidRange = new Range(0, 0, document.lineCount + 5, 0)
-  const fullDocumentRange = document.validateRange(invalidRange)
+  // const document = editor.document
+  // const invalidRange = new Range(0, 0, document.lineCount + 5, 0)
+  // const fullDocumentRange = document.validateRange(invalidRange)
   const undoOptions = {
     undoStopAfter: false,
     undoStopBefore: false
   }
   const editPromise = editor.edit(function (editBuilder) {
-    editBuilder.replace(fullDocumentRange, result.text)
+    editBuilder.replace(editorModule.getEditorRange(editor), result.text)
   }, undoOptions)
 
   editPromise.then(function (editWasApplied) {
@@ -114,7 +112,7 @@ function helloEditor2 (editor) {
       .then((btn) => {
         if (btn === 'Yes') {
           editor.edit((edit) => {
-            edit.replace(getEditorRange(editor), parenModeText)
+            edit.replace(editorModule.getEditorRange(editor), parenModeText)
           })
           const activeState = config.useSmartMode ? 'SMART_MODE' : 'INDENT_MODE'
           editorStates.update((states) => states.set(editor, activeState))
@@ -122,7 +120,7 @@ function helloEditor2 (editor) {
       })
   } else if (parenModeChangedFile && !showOpenFileDialog) {
     editor.edit((edit) => {
-      edit.replace(getEditorRange(editor), parenModeText)
+      edit.replace(editorModule.getEditorRange(editor), parenModeText)
     })
     const activeState = config.useSmartMode ? 'SMART_MODE' : 'INDENT_MODE'
     editorStates.update((states) => states.set(editor, activeState))
