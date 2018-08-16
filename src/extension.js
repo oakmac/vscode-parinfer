@@ -1,3 +1,7 @@
+// -----------------------------------------------------------------------------
+// Requires
+// -----------------------------------------------------------------------------
+
 const vscode = require('vscode')
 const window = vscode.window
 
@@ -11,12 +15,13 @@ const util = require('./util')
 
 const config = require('./config')
 
+const path = require('path')
+const fs = require('fs')
+
 // -----------------------------------------------------------------------------
 // Constants
 // -----------------------------------------------------------------------------
 
-// TODO: how to pull this from the package.json file directly?
-const version = '0.6.1'
 const documentChangeEvent = 'DOCUMENT_CHANGE'
 const selectionChangeEvent = 'SELECTION_CHANGE'
 const fiveSecondsMs = 5 * 1000
@@ -215,6 +220,20 @@ function toggleMode (activeEditor) {
 // Plugin Activation
 // -----------------------------------------------------------------------------
 
+function getExtensionVersion (extensionPath) {
+  const packageJSONFile = path.join(extensionPath, 'package.json')
+  let packageInfo = null
+  try {
+    packageInfo = JSON.parse(fs.readFileSync(packageJSONFile, 'utf8'))
+  } catch (e) {}
+
+  if (packageInfo && packageInfo.version) {
+    return packageInfo.version
+  } else {
+    return null
+  }
+}
+
 function addEvents (context) {
   vscode.window.onDidChangeActiveTextEditor(onChangeActiveEditor)
   vscode.window.onDidChangeTextEditorSelection(onChangeSelection)
@@ -231,10 +250,11 @@ function addEvents (context) {
 }
 
 // runs when the extension is activated
-function activate (context) {
-  console.log('vscode-parinfer ' + version + ' activated!')
+function activate (extensionContext) {
+  const extensionVersion = getExtensionVersion(extensionContext.extensionPath)
+  console.log('vscode-parinfer ' + extensionVersion + ' activated!')
 
-  addEvents(context)
+  addEvents(extensionContext)
   statusBar.initStatusBar('parinfer.toggleMode')
   onChangeActiveEditor(window.activeTextEditor)
 }
