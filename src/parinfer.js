@@ -7,6 +7,9 @@ const workspace = vscode.workspace
 
 const parinfer = require('parinfer')
 
+const parenTrailsModule = require('./parentrails')
+const updateParenTrails = parenTrailsModule.updateParenTrails
+
 const editorModule = require('./editor')
 const editorStates = editorModule.editorStates
 
@@ -51,8 +54,11 @@ function applyParinfer2 (editor, inputText, opts, mode) {
   // FIXME: I think there are some cases where we can show an error here?
   if (!result.success) return
 
-  // exit if the text does not need to be changed
-  if (result.text === inputText) return
+  // if the text was unchanged, update the paren trails and exit
+  if (result.text === inputText) {
+    updateParenTrails(mode, editor, result.parenTrails)
+    return
+  }
 
   const undoOptions = {
     undoStopAfter: false,
@@ -65,9 +71,12 @@ function applyParinfer2 (editor, inputText, opts, mode) {
 
   editPromise.then(function (editWasApplied) {
     if (editWasApplied) {
+      // set the new cursor position
       const newCursorPosition = new Position(result.cursorLine, result.cursorX)
       const nextCursor = new Selection(newCursorPosition, newCursorPosition)
       editor.selection = nextCursor
+
+      updateParenTrails(mode, editor, result.parenTrails)
     } else {
       // TODO: should we do something here if the edit fails?
     }

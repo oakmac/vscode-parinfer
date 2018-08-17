@@ -43,6 +43,11 @@
           "type": "boolean",
           "default": true,
           "description": "Use Smart Mode instead of Indent Mode."
+        },
+        "parinfer.dimParenTrails": {
+          "type": "boolean",
+          "default": true,
+          "description": "Dim paren trails when using Indent or Smart mode."
         }
       }
     },
