@@ -6,6 +6,9 @@ const statusBar = require('./statusbar')
 const editorModule = require('./editor')
 const editorStates = editorModule.editorStates
 
+const parenTrailsModule = require('./parentrails')
+const clearParenTrailDecorators = parenTrailsModule.clearParenTrailDecorators
+
 const parinfer2 = require('./parinfer')
 const util = require('./util')
 
@@ -107,9 +110,12 @@ function onChangeEditorStates (states) {
     if (util.isRunState(currentEditorState)) {
       const txt = activeEditor.document.getText()
       parinfer2.applyParinfer(activeEditor, txt, {})
+    } else {
+      clearParenTrailDecorators(activeEditor)
     }
   } else {
     statusBar.updateStatusBar(null)
+    clearParenTrailDecorators(activeEditor)
   }
 }
 
