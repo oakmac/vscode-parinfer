@@ -33,7 +33,7 @@ function applyParinfer2 (editor, inputText, opts, mode) {
     opts = {}
   }
 
-  if (logParinferInput) {
+  if (logParinferInput                  ) {
     console.log(inputText)
     console.log(opts)
     console.log('~~~~~~~~~~~~~~~~ parinfer input ~~~~~~~~~~~~~~~~')
