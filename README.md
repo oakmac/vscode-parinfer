@@ -1,23 +1,18 @@
-> __NOTE__: Development is currently paused as I have focused on maintaining [atom-parinfer] to prove out the new Smart Mode changes.  Once that is done, my plan is to come back to this plugin to integrate those same changes here—hopefully in a way that shares some code between them if possible.  Sorry, I will be back!
+# Parinfer for Visual Studio Code [![Build Status](https://travis-ci.org/shaunlebron/vscode-parinfer.svg?branch=master)](https://travis-ci.org/shaunlebron/vscode-parinfer) <a href="https://standardjs.com"><img src="https://img.shields.io/badge/code_style-standard-brightgreen.svg" alt="Standard - JavaScript Style Guide"></a>
 
-[atom-parinfer]:https://github.com/oakmac/atom-parinfer
-
-# vscode-parinfer
-
-![vscode-parinfer logo](icon.png)
-
-[Parinfer](http://shaunlebron.github.io/parinfer/) for [VS Code](https://code.visualstudio.com)!
-
-### ChangeLog
-
-[ChangeLog](https://github.com/shaunlebron/vscode-parinfer/releases)
-
+A [Parinfer] package for [Visual Studio Code].
 
 ## Demo
 
 ![demo](parinfer.gif)
 
+### ChangeLog
+
+[ChangeLog](https://github.com/shaunlebron/vscode-parinfer/releases)
 
 ## License
 
 [MIT License](LICENSE.md)
+
+[Parinfer]:http://shaunlebron.github.io/parinfer/
+[Visual Studio Code]:https://code.visualstudio.com
