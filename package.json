@@ -75,7 +75,7 @@
     ]
   },
   "scripts": {
-    "format": "standard --fix src/*.js"
+    "test": "standard src/*.js"
   },
   "dependencies": {
     "parinfer": "3.12.0"
