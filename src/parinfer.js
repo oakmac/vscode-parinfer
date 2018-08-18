@@ -72,9 +72,11 @@ function applyParinfer2 (editor, inputText, opts, mode) {
   editPromise.then(function (editWasApplied) {
     if (editWasApplied) {
       // set the new cursor position
-      const newCursorPosition = new Position(result.cursorLine, result.cursorX)
-      const nextCursor = new Selection(newCursorPosition, newCursorPosition)
-      editor.selection = nextCursor
+      if (Number.isInteger(result.cursorLine) && Number.isInteger(result.cursorX)) {
+        const newCursorPosition = new Position(result.cursorLine, result.cursorX)
+        const nextCursor = new Selection(newCursorPosition, newCursorPosition)
+        editor.selection = nextCursor
+      }
 
       updateParenTrails(mode, editor, result.parenTrails)
     } else {
