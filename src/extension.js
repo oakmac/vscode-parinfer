@@ -4,20 +4,15 @@
 
 const vscode = require('vscode')
 const window = vscode.window
-
 const statusBar = require('./statusbar')
-
 const editorModule = require('./editor')
 const editorStates = editorModule.editorStates
-
 const parenTrailsModule = require('./parentrails')
 const clearParenTrailDecorators = parenTrailsModule.clearParenTrailDecorators
-
 const parinfer2 = require('./parinfer')
 const util = require('./util')
-
+const debounce = util.debounce
 const config = require('./config')
-
 const path = require('path')
 const fs = require('fs')
 
@@ -27,7 +22,6 @@ const fs = require('fs')
 
 const documentChangeEvent = 'DOCUMENT_CHANGE'
 const selectionChangeEvent = 'SELECTION_CHANGE'
-const fiveSecondsMs = 5 * 1000
 
 // -----------------------------------------------------------------------------
 // Events Queue
@@ -35,23 +29,15 @@ const fiveSecondsMs = 5 * 1000
 
 // TODO: need documentation for how the eventsQueue works
 let eventsQueue = []
-
-const eventsQueueMaxLength = 10
-
-function cleanUpEventsQueue () {
-  if (eventsQueue.length > eventsQueueMaxLength) {
-    eventsQueue.length = eventsQueueMaxLength
-  }
-}
-
-setInterval(cleanUpEventsQueue, fiveSecondsMs)
+let prevCursorLine = null
+let prevCursorX = null
+let prevTxt = null
 
 const logEventsQueue = false
 
 function processEventsQueue () {
-  // defensive: these should never happen
+  // do nothing if the queue is empty
   if (eventsQueue.length === 0) return
-  if (eventsQueue[0].type !== selectionChangeEvent) return
 
   const activeEditor = window.activeTextEditor
   const editorMode = editorStates.deref().get(activeEditor)
@@ -60,13 +46,15 @@ function processEventsQueue () {
   if (!util.isRunState(editorMode)) return
 
   if (logEventsQueue) {
+    if (eventsQueue[3]) console.log('3: ', eventsQueue[3])
     if (eventsQueue[2]) console.log('2: ', eventsQueue[2])
     if (eventsQueue[1]) console.log('1: ', eventsQueue[1])
     console.log('0: ', eventsQueue[0])
-    console.log('~~~~~~~~~~~~~~~~ eventsQueue ~~~~~~~~~~~~~~~~')
   }
 
-  const txt = eventsQueue[0].txt
+  // current text / previous text
+  const currentTxt = eventsQueue[0].txt
+  prevTxt = currentTxt
 
   // cursor options
   let options = {
@@ -74,29 +62,32 @@ function processEventsQueue () {
     cursorX: eventsQueue[0].cursorX
   }
 
-  // TODO: this is not working correctly
-  // // add selectionStartLine if applicable
-  // if (eventsQueue[0].selectionStartLine) {
-  //   options.selectionStartLine = eventsQueue[0].selectionStartLine
-  // }
-
-  // check the last two events for previous cursor information
-  if (eventsQueue[1] && eventsQueue[1].cursorLine) {
-    options.prevCursorLine = eventsQueue[1].cursorLine
-    options.prevCursorX = eventsQueue[1].cursorX
-  } else if (eventsQueue[2] && eventsQueue[2].cursorLine) {
-    options.prevCursorLine = eventsQueue[2].cursorLine
-    options.prevCursorX = eventsQueue[2].cursorX
-  }
-
-  // "document change" events always fire first followed immediately by a "selection change" event
-  // try to grab the changes from the most recent document change event
-  if (eventsQueue[1] && eventsQueue[1].type === documentChangeEvent && eventsQueue[1].changes) {
+  // grab the document changes
+  if (eventsQueue[0].type === documentChangeEvent && eventsQueue[0].changes) {
+    options.changes = eventsQueue[0].changes
+  } else if (eventsQueue[0].type === selectionChangeEvent &&
+             eventsQueue[1] &&
+             eventsQueue[1].type === documentChangeEvent &&
+             eventsQueue[1].changes) {
     options.changes = eventsQueue[1].changes
   }
 
-  parinfer2.applyParinfer(activeEditor, txt, options)
+  // previous cursor information
+  options.prevCursorLine = prevCursorLine
+  options.prevCursorX = prevCursorX
+  prevCursorLine = options.cursorLine
+  prevCursorX = options.cursorX
+
+  if (logEventsQueue) {
+    console.log('Parinfer options: ' + JSON.stringify(options))
+    console.log('~~~~~~~~~~~~~~~~ eventsQueue ~~~~~~~~~~~~~~~~')
+  }
+
+  eventsQueue.length = 0
+  parinfer2.applyParinfer(activeEditor, currentTxt, options)
 }
+
+const debouncedProcessEventsQueue = debounce(processEventsQueue, 5)
 
 // -----------------------------------------------------------------------------
 // Change Editor State
@@ -131,8 +122,11 @@ editorStates.addWatch(onChangeEditorStates)
 // -----------------------------------------------------------------------------
 
 function onChangeActiveEditor (editor) {
-  // clear out the eventsQueue when we switch editor tabs
-  eventsQueue = []
+  // clear out the state when we switch the active editor
+  eventsQueue.length = 0
+  prevCursorLine = null
+  prevCursorX = null
+  prevTxt = null
 
   if (editor) {
     parinfer2.helloEditor(editor)
@@ -149,50 +143,51 @@ function convertChangeObjects (oldTxt, changeEvt) {
   }
 }
 
+// this function fires any time a document's content is changed
 function onChangeTextDocument (evt) {
   // drop any events that do not contain document changes
-  // (usually the first event to a document)
+  // NOTE: this is usually the first change to a document and anytime the user presses "save"
   if (evt.contentChanges && evt.contentChanges.length === 0) {
     return
   }
 
+  const activeEditor = window.activeTextEditor
+  const theDocument = evt.document
   let parinferEvent = {
-    txt: evt.document.getText(),
+    cursorLine: activeEditor.selections[0].active.line,
+    cursorX: activeEditor.selections[0].active.character,
+    documentVersion: theDocument.version,
+    txt: theDocument.getText(),
     type: documentChangeEvent
   }
 
-  // only create a "changes" property if we have a prior event
-  if (eventsQueue[0] && eventsQueue[0].txt) {
-    const prevTxt = eventsQueue[0].txt
+  // only create a "changes" property if there was prior text
+  if (prevTxt) {
     const convertFn = convertChangeObjects.bind(null, prevTxt)
     parinferEvent.changes = evt.contentChanges.map(convertFn)
   }
 
-  // put this event on the queue
+  // put this event on the queue and schedule a processing
   eventsQueue.unshift(parinferEvent)
+  debouncedProcessEventsQueue()
 }
 
+// this function fires any time a cursor's position changes (ie: often)
 function onChangeSelection (evt) {
   const editor = evt.textEditor
+  const theDocument = editor.document
   const selection = evt.selections[0]
-  let parinferEvent = {
+  const parinferEvent = {
     cursorLine: selection.active.line,
     cursorX: selection.active.character,
-    txt: editor.document.getText(),
+    documentVersion: theDocument.version,
+    txt: theDocument.getText(),
     type: selectionChangeEvent
   }
 
-  // TODO: this is not working correctly
-  // // add selectionStartLine if applicable
-  // if (selection && !selection.isEmpty) {
-  //   parinferEvent.selectionStartLine = selection.start.line
-  // }
-
-  // put this event on the queue
+  // put this event on the queue and schedule a processing
   eventsQueue.unshift(parinferEvent)
-
-  // process the queue after every "selection change" event
-  processEventsQueue()
+  debouncedProcessEventsQueue()
 }
 
 // -----------------------------------------------------------------------------

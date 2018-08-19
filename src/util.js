@@ -2,6 +2,18 @@ function isString (s) {
   return typeof s === 'string'
 }
 
+// https://tinyurl.com/y7paps66
+function debounce (fn, interval) {
+  let timeout = 0
+  return function () {
+    clearTimeout(timeout)
+    const args = arguments
+    timeout = setTimeout(function () {
+      fn.apply(null, args)
+    }, interval)
+  }
+}
+
 function atom (val) {
   let watchers = []
   const notify = () => watchers.forEach((f) => f(val))
@@ -117,12 +129,13 @@ function isRunState (state) {
 }
 
 exports.atom = atom
+exports.debounce = debounce
 exports.findEndRow = findEndRow
 exports.findStartRow = findStartRow
 exports.getTextFromRange = getTextFromRange
 exports.isParentExprLine = isParentExprLine
-exports.isString = isString
 exports.isRunState = isRunState
+exports.isString = isString
 exports.linesDiff = linesDiff
 exports.map = map
 exports.splitLines = splitLines
