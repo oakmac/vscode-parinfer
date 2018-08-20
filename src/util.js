@@ -110,6 +110,7 @@ function linesDiff (textA, textB) {
   }, initialCount)
 }
 
+// FIXME: almost certainly this function has a bug - does multiline work?
 function getTextFromRange (txt, range, length) {
   if (length === 0) return ''
 
@@ -122,11 +123,81 @@ function getTextFromRange (txt, range, length) {
   return line.substring(firstChar, firstChar + length)
 }
 
+function replaceWithinString(orig, start, end, replace) {
+  return (
+    orig.substring(0, start) +
+    replace +
+    orig.substring(end)
+  );
+}
+
+function joinChanges_OLD (change1, change2) {
+  let newChange = {
+    lineNo: change1.lineNo,
+    oldText: change1.oldText,
+    x: change1.x
+  }
+
+  // const minX = Math.min(change1.x, change2.x)
+  // const maxX = Math.max(change1.x + change1.newText.length, change2.x + change2.newText.length)
+  //
+  // const line1 = []
+  // const line2 = []
+
+  // change2 is either 1) an insert 2) a delete or 3) replace
+  const isInsertOrReplace = change2.newText.length >= change2.oldText.length
+  const isDelete = change2.newText.length < change2.oldText.length
+
+  if (isInsertOrReplace) {
+    const startIdx = change2.x - change1.x
+    const changeLength = change2.newText.length
+    const endIdx = startIdx + changeLength
+    newChange.newText = replaceWithinString(change1.newText, startIdx, endIdx, change2.newText)
+  } else if (isDelete) {
+    //newChange.
+  }
+
+  return newChange
+}
+
+function joinChanges (change1, change2) {
+  const minX = Math.min(change1.x, change2.x)
+  const maxX = Math.max(change1.x + change1.oldText.length, change1.x + change1.newText.length,
+                        change2.x + change2.oldText.length, change2.x + change2.newText.length)
+  const arrSize = maxX - minX
+
+
+  // const minX = Math.min(change1.x, change2.x)
+  // const maxX = Math.max(change1.x + change1.newText.length, change2.x + change2.newText.length)
+  //
+  // const line1 = []
+  // const line2 = []
+
+  // change2 is either 1) an insert 2) a delete or 3) replace
+  const isInsertOrReplace = change2.newText.length >= change2.oldText.length
+  const isDelete = change2.newText.length < change2.oldText.length
+
+  if (isInsertOrReplace) {
+    const startIdx = change2.x - change1.x
+    const changeLength = change2.newText.length
+    const endIdx = startIdx + changeLength
+    newChange.newText = replaceWithinString(change1.newText, startIdx, endIdx, change2.newText)
+  } else if (isDelete) {
+
+  }
+
+  return newChange
+}
+
 function isRunState (state) {
   return state === 'INDENT_MODE' ||
          state === 'SMART_MODE' ||
          state === 'PAREN_MODE'
 }
+
+// -----------------------------------------------------------------------------
+// Exports
+// -----------------------------------------------------------------------------
 
 exports.atom = atom
 exports.debounce = debounce
@@ -136,6 +207,7 @@ exports.getTextFromRange = getTextFromRange
 exports.isParentExprLine = isParentExprLine
 exports.isRunState = isRunState
 exports.isString = isString
+exports.joinChanges = joinChanges
 exports.linesDiff = linesDiff
 exports.map = map
 exports.splitLines = splitLines

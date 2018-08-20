@@ -1,24 +1,17 @@
 const vscode = require('vscode')
 const Position = vscode.Position
 const Selection = vscode.Selection
-
 const window = vscode.window
 const workspace = vscode.workspace
-
 const parinfer = require('parinfer')
-
 const parenTrailsModule = require('./parentrails')
 const updateParenTrails = parenTrailsModule.updateParenTrails
-
 const editorModule = require('./editor')
 const editorStates = editorModule.editorStates
-
 const util = require('./util')
-
 const messages = require('./messages')
 const parenModeFailedMsg = messages.parenModeFailedMsg
 const parenModeChangedFileMsg = messages.parenModeChangedFileMsg
-
 const config = require('./config')
 
 // -----------------------------------------------------------------------------
@@ -54,11 +47,11 @@ function applyParinfer2 (editor, inputText, opts, mode) {
   // FIXME: I think there are some cases where we can show an error here?
   if (!result.success) return
 
-  // if the text was unchanged, update the paren trails and exit
-  if (result.text === inputText) {
-    updateParenTrails(mode, editor, result.parenTrails)
-    return
-  }
+  // // if the text was unchanged, update the paren trails and exit
+  // if (result.text === inputText) {
+  //   updateParenTrails(mode, editor, result.parenTrails)
+  //   return
+  // }
 
   const undoOptions = {
     undoStopAfter: false,
