@@ -147,8 +147,15 @@ function joinMultiLineChange (change1, change2) {
 }
 
 function joinSingleLineDeleteDelete (change1, change2) {
-  // TODO: write me
-  return null
+  const minX = Math.min(change1.x, change2.x)
+  const maxX = Math.max(change1.x + change1.changeLength, change2.x + change2.changeLength)
+
+  return {
+    changeLength: maxX - minX,
+    lineNo: change1.lineNo,
+    text: '',
+    x: change2.x
+  }
 }
 
 function joinSingleLineDeleteInsert (change1, change2) {

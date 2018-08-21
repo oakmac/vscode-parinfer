@@ -98,6 +98,27 @@ const changeExamples = [
       text: '',
       x: 1
     }
+  },
+  {
+    description: 'longer deletes',
+    change1: {
+      changeLength: 4,
+      lineNo: 2,
+      text: '',
+      x: 4
+    },
+    change2: {
+      changeLength: 3,
+      lineNo: 2,
+      text: '',
+      x: 1
+    },
+    result: {
+      changeLength: 7,
+      lineNo: 2,
+      text: '',
+      x: 1
+    }
   }
 ]
 
