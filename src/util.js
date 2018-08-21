@@ -123,70 +123,91 @@ function getTextFromRange (txt, range, length) {
   return line.substring(firstChar, firstChar + length)
 }
 
-function replaceWithinString(orig, start, end, replace) {
+function replaceWithinString (orig, start, end, replace) {
   return (
     orig.substring(0, start) +
     replace +
     orig.substring(end)
-  );
+  )
 }
 
-function joinChanges_OLD (change1, change2) {
-  let newChange = {
+const LINE_ENDING_REGEX = /\r?\n/
+
+function changeType (change) {
+  if (change.text.length >= change.changeLength) {
+    return 'insert'
+  } else {
+    return 'delete'
+  }
+}
+
+function joinMultiLineChange (change1, change2) {
+  // TODO: write this
+  return null
+}
+
+function joinSingleLineDeleteDelete (change1, change2) {
+  // TODO: write me
+  return null
+}
+
+function joinSingleLineDeleteInsert (change1, change2) {
+  // TODO: write me
+  return null
+}
+
+function joinSingleLineInsertDelete (change1, change2) {
+  // TODO: write me
+  return null
+}
+
+function joinSingleLineInsertInsert (change1, change2) {
+  const startIdx = change2.x - change1.x
+  const endIdx = startIdx + change2.changeLength
+  return {
+    changeLength: 0,
     lineNo: change1.lineNo,
-    oldText: change1.oldText,
+    text: replaceWithinString(change1.text, startIdx, endIdx, change2.text),
     x: change1.x
   }
-
-  // const minX = Math.min(change1.x, change2.x)
-  // const maxX = Math.max(change1.x + change1.newText.length, change2.x + change2.newText.length)
-  //
-  // const line1 = []
-  // const line2 = []
-
-  // change2 is either 1) an insert 2) a delete or 3) replace
-  const isInsertOrReplace = change2.newText.length >= change2.oldText.length
-  const isDelete = change2.newText.length < change2.oldText.length
-
-  if (isInsertOrReplace) {
-    const startIdx = change2.x - change1.x
-    const changeLength = change2.newText.length
-    const endIdx = startIdx + changeLength
-    newChange.newText = replaceWithinString(change1.newText, startIdx, endIdx, change2.newText)
-  } else if (isDelete) {
-    //newChange.
-  }
-
-  return newChange
 }
 
-function joinChanges (change1, change2) {
-  const minX = Math.min(change1.x, change2.x)
-  const maxX = Math.max(change1.x + change1.oldText.length, change1.x + change1.newText.length,
-                        change2.x + change2.oldText.length, change2.x + change2.newText.length)
-  const arrSize = maxX - minX
+function joinSingleLineChange (change1, change2) {
+  const change1Type = changeType(change1)
+  const change2Type = changeType(change2)
 
-
-  // const minX = Math.min(change1.x, change2.x)
-  // const maxX = Math.max(change1.x + change1.newText.length, change2.x + change2.newText.length)
-  //
-  // const line1 = []
-  // const line2 = []
-
-  // change2 is either 1) an insert 2) a delete or 3) replace
-  const isInsertOrReplace = change2.newText.length >= change2.oldText.length
-  const isDelete = change2.newText.length < change2.oldText.length
-
-  if (isInsertOrReplace) {
-    const startIdx = change2.x - change1.x
-    const changeLength = change2.newText.length
-    const endIdx = startIdx + changeLength
-    newChange.newText = replaceWithinString(change1.newText, startIdx, endIdx, change2.newText)
-  } else if (isDelete) {
-
+  // four possible combinations:
+  // insert + insert
+  // insert + delete
+  // delete + insert
+  // delete + delete
+  if (change1Type === 'insert' && change2Type === 'insert') {
+    return joinSingleLineInsertInsert(change1, change2)
+  } else if (change1Type === 'insert' && change2Type === 'delete') {
+    return joinSingleLineInsertDelete(change1, change2)
+  } else if (change1Type === 'delete' && change2Type === 'insert') {
+    return joinSingleLineDeleteInsert(change1, change2)
+  } else if (change1Type === 'delete' && change2Type === 'delete') {
+    return joinSingleLineDeleteDelete(change1, change2)
   }
+}
 
-  return newChange
+// NOTES:
+// - Shaun says that changes must be contiguous
+// - We need a predicate function to check that two changes are contiguous
+// - Get one-line changes working first, then tackle multi-line
+function joinChanges (change1, change2) {
+  const change1Lines = change1.text.split(LINE_ENDING_REGEX)
+  const change2Lines = change2.text.split(LINE_ENDING_REGEX)
+  const isMultiLineChange = change1.lineNo !== change2.lineNo ||
+                            change1Lines.length > 1 ||
+                            change2Lines.length > 1
+
+  if (isMultiLineChange) {
+    return joinMultiLineChange(change1, change2)
+  } else {
+    return joinSingleLineChange(change1, change2)
+  }
 }
 
 function isRunState (state) {

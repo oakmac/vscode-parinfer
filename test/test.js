@@ -4,134 +4,133 @@ const assert = require('assert')
 const util = require('../src/util.js')
 
 // -----------------------------------------------------------------------------
-// Util
+// joinChanges
 // -----------------------------------------------------------------------------
 
-const change1a = {
-  lineNo: 1,
-  newText: 'a',
-  oldText: '',
-  x: 3
+function isChangeObject (obj) {
+  return obj.hasOwnProperty('changeLength') && typeof obj.changeLength === 'number' &&
+         obj.hasOwnProperty('lineNo') && typeof obj.lineNo === 'number' &&
+         obj.hasOwnProperty('text') && typeof obj.text === 'string' &&
+         obj.hasOwnProperty('x') && typeof obj.x === 'number'
 }
 
-const change1b = {
-  lineNo: 1,
-  newText: 'bc',
-  oldText: '',
-  x: 4
-}
+const changeExamples = [
+  {
+    description: 'two basic inserts',
+    change1: {
+      changeLength: 0,
+      lineNo: 1,
+      text: 'a',
+      x: 3
+    },
+    change2: {
+      changeLength: 0,
+      lineNo: 1,
+      text: 'bc',
+      x: 4
+    },
+    result: {
+      changeLength: 0,
+      lineNo: 1,
+      text: 'abc',
+      x: 3
+    }
+  },
+  {
+    description: 'basic insert and a replace',
+    change1: {
+      changeLength: 0,
+      lineNo: 0,
+      text: 'abc',
+      x: 0
+    },
+    change2: {
+      changeLength: 1,
+      lineNo: 0,
+      text: 'z',
+      x: 2
+    },
+    result: {
+      changeLength: 0,
+      lineNo: 0,
+      text: 'abz',
+      x: 0
+    }
+  },
+  {
+    description: 'insert, then insert beyond first range',
+    change1: {
+      changeLength: 0,
+      lineNo: 0,
+      text: 'abc',
+      x: 1
+    },
+    change2: {
+      changeLength: 3,
+      lineNo: 0,
+      text: 'xyzxyz',
+      x: 1
+    },
+    result: {
+      changeLength: 0,
+      lineNo: 0,
+      text: 'xyzxyz',
+      x: 1
+    }
+  },
+  {
+    description: 'two simple deletes',
+    change1: {
+      changeLength: 1,
+      lineNo: 0,
+      text: '',
+      x: 2
+    },
+    change2: {
+      changeLength: 1,
+      lineNo: 0,
+      text: '',
+      x: 1
+    },
+    result: {
+      changeLength: 2,
+      lineNo: 0,
+      text: '',
+      x: 1
+    }
+  }
+]
 
-const joinedChanged1 = {
-  lineNo: 1,
-  newText: 'abc',
-  oldText: '',
-  x: 3
-}
+// const change5a = {
+//   lineNo: 0,
+//   text: 'pear\npeach',
+//   oldText: 'strawberry pineapple\nbanana raspberry',
+//   x: 1
+// }
+//
+// const change5b = {
+//   lineNo: 1,
+//   text: 'orange',
+//   oldText: 'peach',
+//   x: 0
+// }
+//
+// const joinedChanged5 = {
+//   lineNo: 0,
+//   text: 'pear\norange',
+//   oldText: 'strawberry pineapple\nbanana raspberry',
+//   x: 1
+// }
 
-const change2a = {
-  lineNo: 0,
-  newText: 'abc',
-  oldText: '',
-  x: 0
-}
-
-const change2b = {
-  lineNo: 0,
-  newText: 'x',
-  oldText: 'c',
-  x: 2
-}
-
-const joinedChanged2 = {
-  lineNo: 0,
-  newText: 'abx',
-  oldText: '',
-  x: 0
-}
-
-const change3a = {
-  lineNo: 0,
-  newText: 'abc',
-  oldText: '',
-  x: 1
-}
-
-const change3b = {
-  lineNo: 0,
-  newText: 'xyzxyz',
-  oldText: 'abc',
-  x: 1
-}
-
-const joinedChanged3 = {
-  lineNo: 0,
-  newText: 'xyzxyz',
-  oldText: '',
-  x: 1
-}
-
-const change4a = {
-  lineNo: 0,
-  newText: '',
-  oldText: 'c',
-  x: 2
-}
-
-const change4b = {
-  lineNo: 0,
-  newText: '',
-  oldText: 'b',
-  x: 1
-}
-
-const joinedChanged4 = {
-  lineNo: 0,
-  newText: '',
-  oldText: 'bc',
-  x: 1
-}
-
-const change5a = {
-  lineNo: 0,
-  newText: 'pear\npeach',
-  oldText: 'strawberry pineapple\nbanana raspberry',
-  x: 1
-}
-
-const change5b = {
-  lineNo: 1,
-  newText: 'orange',
-  oldText: 'peach',
-  x: 0
-}
-
-const joinedChanged5 = {
-  lineNo: 0,
-  newText: 'pear\norange',
-  oldText: 'strawberry pineapple\nbanana raspberry',
-  x: 1
-}
-
-function testUtil () {
-  it('joinChanges 1', function () {
-    assert.deepStrictEqual(util.joinChanges(change1a, change1b), joinedChanged1)
+function testJoinChanges () {
+  changeExamples.forEach(function (itm) {
+    it(itm.description, function () {
+      assert.ok(isChangeObject(itm.change1), '"change1" object is formatted wrong for test "' + itm.description + '"')
+      assert.ok(isChangeObject(itm.change2), '"change2" object is formatted wrong for test "' + itm.description + '"')
+      assert.ok(isChangeObject(itm.result), '"result" object is formatted wrong for test "' + itm.description + '"')
+      assert.deepStrictEqual(util.joinChanges(itm.change1, itm.change2), itm.result)
+    })
   })
-
-  it('joinChanges 2', function () {
-    assert.deepStrictEqual(util.joinChanges(change2a, change2b), joinedChanged2)
-  })
-
-  it('joinChanges 3', function () {
-    assert.deepStrictEqual(util.joinChanges(change3a, change3b), joinedChanged3)
-  })
-
-  it('joinChanges 4', function () {
-    assert.deepStrictEqual(util.joinChanges(change4a, change4b), joinedChanged4)
-  })
-
-  it('joinChanges 5', function () {
-    assert.deepStrictEqual(util.joinChanges(change5a, change5b), joinedChanged5)
-  })
 }
 
-describe('util.js tests', testUtil)
+describe('joinChanges', testJoinChanges)

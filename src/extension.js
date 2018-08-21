@@ -32,7 +32,6 @@ let eventsQueue = []
 let ignoreNextEdit = false
 let prevCursorLine = null
 let prevCursorX = null
-let prevTxt = null
 
 const logEventsQueue = true
 
@@ -46,9 +45,7 @@ function processEventsQueue () {
   // exit if we are not in Smart, Indent, or Paren mode
   if (!util.isRunState(editorMode)) return
 
-  // current text / previous text
   const currentTxt = eventsQueue[0].txt
-  prevTxt = currentTxt
 
   // cursor options
   let options = {
@@ -132,31 +129,31 @@ function onChangeActiveEditor (editor) {
   ignoreNextEdit = false
   prevCursorLine = null
   prevCursorX = null
-  prevTxt = null
 
   if (editor) {
     parinfer2.helloEditor(editor)
   }
 }
 
-// convert VS Code change object to the format Parinfer expects
-function convertChangeObjects (oldTxt, changeEvt) {
-  return {
-    lineNo: changeEvt.range.start.line,
-    newText: changeEvt.text,
-    oldText: util.getTextFromRange(oldTxt, changeEvt.range, changeEvt.rangeLength),
-    x: changeEvt.range.start.character
-  }
-}
+// FIXME: candidate for deletion
+// // convert VS Code change object to the format Parinfer expects
+// function convertChangeObjects (oldTxt, changeEvt) {
+//   return {
+//     lineNo: changeEvt.range.start.line,
+//     newText: changeEvt.text,
+//     oldText: util.getTextFromRange(oldTxt, changeEvt.range, changeEvt.rangeLength),
+//     x: changeEvt.range.start.character
+//   }
+// }
 
 // https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/String/repeat
-function repeatString (char, length) {
-  let newStr = ''
-  for (let i = 0; i < length; i++) {
-    newStr = newStr + 'x'
-  }
-  return newStr
-}
+// function repeatString (char, length) {
+//   let newStr = ''
+//   for (let i = 0; i < length; i++) {
+//     newStr = newStr + 'x'
+//   }
+//   return newStr
+// }
 
 // convert TextDocumentChangeEvent to the format Parinfer expects
 function convertChangeEvent (change) {
@@ -177,9 +174,9 @@ function convertChangeEvent (change) {
   // }
 
   return {
+    changeLength: change.rangeLength,
     lineNo: change.range.start.line,
-    newText: change.text,
-    oldText: repeatString('x', change.rangeLength),
+    text: change.text,
     x: change.range.start.character
   }
 }
@@ -211,12 +208,6 @@ function onChangeTextDocument (evt) {
 
   // console.log(JSON.stringify(parinferEvent.changes, null, 2))
   // console.log('zzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzz')
-
-  // only create a "changes" property if there was prior text
-  // if (prevTxt) {
-  //   const convertFn = convertChangeObjects.bind(null, prevTxt)
-  //   parinferEvent.changes = evt.contentChanges.map(convertFn)
-  // }
 
   // put this event on the queue and schedule a processing
   eventsQueue.unshift(parinferEvent)

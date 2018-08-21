@@ -75,7 +75,7 @@
     ]
   },
   "scripts": {
-    "test": "standard src/*.js test/*.js && mocha"
+    "test": "standard && mocha"
   },
   "dependencies": {
     "parinfer": "3.12.0"
