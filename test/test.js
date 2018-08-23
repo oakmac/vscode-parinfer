@@ -120,6 +120,8 @@ const changeExamples = [
       x: 1
     }
   }
+  // FIXME: need more test cases here
+  // In particular: need multi-line
 ]
 
 // const change5a = {

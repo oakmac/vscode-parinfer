@@ -2,6 +2,7 @@
 // Requires
 // -----------------------------------------------------------------------------
 
+const fs = require('fs')
 const vscode = require('vscode')
 const window = vscode.window
 const statusBar = require('./statusbar')
@@ -10,11 +11,11 @@ const editorStates = editorModule.editorStates
 const parenTrailsModule = require('./parentrails')
 const clearParenTrailDecorators = parenTrailsModule.clearParenTrailDecorators
 const parinfer2 = require('./parinfer')
-const util = require('./util')
-const debounce = util.debounce
 const config = require('./config')
 const path = require('path')
-const fs = require('fs')
+const state = require('./state')
+const util = require('./util')
+const debounce = util.debounce
 
 // -----------------------------------------------------------------------------
 // Constants
@@ -29,11 +30,10 @@ const selectionChangeEvent = 'SELECTION_CHANGE'
 
 // TODO: need documentation for how the eventsQueue works
 let eventsQueue = []
-let ignoreNextEdit = false
 let prevCursorLine = null
 let prevCursorX = null
 
-const logEventsQueue = true
+const logEventsQueue = false
 
 function processEventsQueue () {
   // do nothing if the queue is empty (this should never happen)
@@ -60,36 +60,41 @@ function processEventsQueue () {
   prevCursorX = options.cursorX
 
   // grab the document changes
-  let changes = []
+  let changes = null
   let i = eventsQueue.length - 1
   while (i >= 0) {
     if (eventsQueue[i] &&
         eventsQueue[i].type === documentChangeEvent &&
         eventsQueue[i].changes) {
-      changes = changes.concat(eventsQueue[i].changes)
+      if (!changes) {
+        changes = eventsQueue[i].changes
+      } else {
+        for (let j = 0; j < changes.length; j++) {
+          if (eventsQueue[i].changes[j]) {
+            changes[j] = util.joinChanges(changes[j], eventsQueue[i].changes[j])
+          }
+        }
+      }
     }
     i = i - 1
   }
-  if (changes.length > 0) {
-    options.changes = changes
+  if (changes) {
+    options.changes = changes.map(changeToParinferFormat)
   }
 
   if (logEventsQueue) {
-    // console.log(JSON.stringify(eventsQueue, null, 2))
+    console.log(JSON.stringify(eventsQueue, null, 2))
     console.log('Parinfer options: ' + JSON.stringify(options))
     console.log('~~~~~~~~~~~~~~~~ eventsQueue ~~~~~~~~~~~~~~~~')
   }
 
-  // clear out the event queue and ignore the next edit (since Parinfer will make it)
-  // FIXME: set this flag just before making the edit
-  // FIXME: we probably need a second flag for the selection change
-  //        (assuming that Parinfer changes the cursor)
+  // clear out the event queue
   eventsQueue.length = 0
-  ignoreNextEdit = true
   parinfer2.applyParinfer(activeEditor, currentTxt, options)
 }
 
-const debouncedProcessEventsQueue = debounce(processEventsQueue, 1000)
+const processQueueDebounceIntervalMs = 20
+const debouncedProcessEventsQueue = debounce(processEventsQueue, processQueueDebounceIntervalMs)
 
 // -----------------------------------------------------------------------------
 // Change Editor State
@@ -126,7 +131,7 @@ editorStates.addWatch(onChangeEditorStates)
 function onChangeActiveEditor (editor) {
   // clear out the state when we switch the active editor
   eventsQueue.length = 0
-  ignoreNextEdit = false
+  state.ignoreNextEdit = false
   prevCursorLine = null
   prevCursorX = null
 
@@ -135,44 +140,18 @@ function onChangeActiveEditor (editor) {
   }
 }
 
-// FIXME: candidate for deletion
-// // convert VS Code change object to the format Parinfer expects
-// function convertChangeObjects (oldTxt, changeEvt) {
-//   return {
-//     lineNo: changeEvt.range.start.line,
-//     newText: changeEvt.text,
-//     oldText: util.getTextFromRange(oldTxt, changeEvt.range, changeEvt.rangeLength),
-//     x: changeEvt.range.start.character
-//   }
-// }
+// convert TextDocumentChangeEvent to the format parinfer expects
+function changeToParinferFormat (change) {
+  return {
+    lineNo: change.lineNo,
+    newText: change.text,
+    oldText: 'x'.repeat(change.changeLength),
+    x: change.x
+  }
+}
 
-// https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/String/repeat
-// function repeatString (char, length) {
-//   let newStr = ''
-//   for (let i = 0; i < length; i++) {
-//     newStr = newStr + 'x'
-//   }
-//   return newStr
-// }
-
-// convert TextDocumentChangeEvent to the format Parinfer expects
+// convert TextDocumentChangeEvent to a different format
 function convertChangeEvent (change) {
-  // const start = {
-  //   line: change.range.start.line,
-  //   char: change.range.start.character
-  // }
-  // const end = {
-  //   line: change.range.end.line,
-  //   char: change.range.end.character
-  // }
-  // return {
-  //   rangeStart: start,
-  //   rangeEnd: end,
-  //   rangeOffset: change.rangeOffset,
-  //   rangeLength: change.rangeLength,
-  //   text: change.text
-  // }
-
   return {
     changeLength: change.rangeLength,
     lineNo: change.range.start.line,
@@ -184,8 +163,9 @@ function convertChangeEvent (change) {
 // this function fires any time a document's content is changed
 function onChangeTextDocument (evt) {
   // ignore edits that were made by Parinfer
-  if (ignoreNextEdit) {
-    ignoreNextEdit = false
+  if (state.ignoreNextEdit) {
+    console.log('ignored a document change event')
+    state.ignoreNextEdit = false
     return
   }
 
@@ -206,17 +186,21 @@ function onChangeTextDocument (evt) {
     type: documentChangeEvent
   }
 
-  // console.log(JSON.stringify(parinferEvent.changes, null, 2))
-  // console.log('zzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzz')
-
   // put this event on the queue and schedule a processing
   eventsQueue.unshift(parinferEvent)
   debouncedProcessEventsQueue()
 }
 
 // this function fires any time a cursor's position changes (ie: often)
-// FIXME: make sure to ignore this event if it was caused by Parinfer
 function onChangeSelection (evt) {
+  // ignore selection changes that were made by Parinfer
+  if (state.ignoreNextSelectionChange) {
+    console.log('ignored a selection change event')
+    state.ignoreNextSelectionChange = false
+    return
+  }
+
+  console.log('selection change event')
   const editor = evt.textEditor
   const theDocument = editor.document
   const selection = evt.selections[0]

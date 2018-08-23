@@ -13,6 +13,7 @@ const messages = require('./messages')
 const parenModeFailedMsg = messages.parenModeFailedMsg
 const parenModeChangedFileMsg = messages.parenModeChangedFileMsg
 const config = require('./config')
+const state = require('./state')
 
 // -----------------------------------------------------------------------------
 // Parinfer Application
@@ -20,6 +21,11 @@ const config = require('./config')
 
 const logParinferInput = false
 const logParinferOutput = false
+
+const undoOptions = {
+  undoStopAfter: false,
+  undoStopBefore: false
+}
 
 function applyParinfer2 (editor, inputText, opts, mode) {
   if (!opts) {
@@ -47,38 +53,55 @@ function applyParinfer2 (editor, inputText, opts, mode) {
   // FIXME: I think there are some cases where we can show an error here?
   if (!result.success) return
 
-  // // if the text was unchanged, update the paren trails and exit
-  // if (result.text === inputText) {
-  //   updateParenTrails(mode, editor, result.parenTrails)
-  //   return
-  // }
+  const hasTextChanged = result.text !== inputText
+  const currentCursorLine = editor.selections[0].start.line
+  const currentCursorX = editor.selections[0].start.character
+  const hasCursorChanged = !areCursorsEqual(currentCursorLine, currentCursorX,
+                                            result.cursorLine, result.cursorX)
+  const newCursorPosition = new Position(result.cursorLine, result.cursorX)
+  const nextCursor = new Selection(newCursorPosition, newCursorPosition)
 
-  const undoOptions = {
-    undoStopAfter: false,
-    undoStopBefore: false
-  }
+  // might be helpful:
+  // https://github.com/Microsoft/vscode/issues/16389
+  // https://github.com/Microsoft/vscode/issues/32058
 
-  const editPromise = editor.edit(function (editBuilder) {
-    editBuilder.replace(editorModule.getEditorRange(editor), result.text)
-  }, undoOptions)
+  // text and cursor unchanged: update the paren trails
+  if (!hasTextChanged && !hasCursorChanged) {
+    console.log('no text change; no cursor change')
+    updateParenTrails(mode, editor, result.parenTrails)
+  // text unchanged; cursor needs to be updated
+  } else if (!hasTextChanged && hasCursorChanged) {
+    console.log('no text change; cursor update')
+    editor.selection = nextCursor
+    updateParenTrails(mode, editor, result.parenTrails)
+  // text changed
+  } else if (hasTextChanged) {
+    console.log('we are about to change the text')
+    state.ignoreNextEdit = true
+    state.ignoreNextSelectionChange = true
+    const theWholeDocumentRange = editorModule.getEditorRange(editor)
+    const editPromise = editor.edit(function (editBuilder) {
+      // editBuilder.delete(theWholeDocumentRange)
+      // editBuilder.insert(new Position(0, 0), result.text)
+      editBuilder.replace(editorModule.getEditorRange(editor), result.text)
+    }, undoOptions)
 
-  editPromise.then(function (editWasApplied) {
-    if (editWasApplied) {
-      // set the new cursor position
-      // NOTE: ignore the cursor from Parinfer if the user has multiple cursors
-      if (Number.isInteger(result.cursorLine) &&
-          Number.isInteger(result.cursorX) &&
-          editor.selections.length <= 1) {
-        const newCursorPosition = new Position(result.cursorLine, result.cursorX)
-        const nextCursor = new Selection(newCursorPosition, newCursorPosition)
-        editor.selections[0] = nextCursor
+    editPromise.then(function (editWasApplied) {
+      if (editWasApplied) {
+        editor.selection = nextCursor
+        updateParenTrails(mode, editor, result.parenTrails)
+      } else {
+        // TODO: should we do something here if the edit fails?
       }
+    })
+  }
+}
 
-      updateParenTrails(mode, editor, result.parenTrails)
-    } else {
-      // TODO: should we do something here if the edit fails?
-    }
-  })
+function areCursorsEqual (oldCursorLine, oldCursorX, newCursorLine, newCursorX) {
+  return Number.isInteger(newCursorLine) &&
+         Number.isInteger(newCursorX) &&
+         oldCursorLine === newCursorLine &&
+         oldCursorX === newCursorX
 }
 
 function applyParinfer (editor, text, opts) {
