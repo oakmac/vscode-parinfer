@@ -188,10 +188,88 @@ const diffExamples = [
         x: 4
       }
     ]
+  },
+  {
+    description: 'basic delete',
+    diff: [
+      {
+        count: 1,
+        value: '('
+      },
+      {
+        count: 1,
+        removed: true,
+        value: 'f'
+      },
+      {
+        count: 15,
+        value: 'oobar [1 2 3])'
+      }
+    ],
+    parinfer: [
+      {
+        lineNo: 0,
+        newText: '',
+        oldText: 'f',
+        x: 1
+      }
+    ]
+  },
+  {
+    description: 'multi-line insert',
+    diff: [
+      {
+        count: 10,
+        value: 'abc\ndef\ngh'
+      },
+      {
+        count: 11,
+        added: true,
+        value: 'rst\nuvw\nxyz'
+      },
+      {
+        count: 5,
+        value: 'i\njkl'
+      }
+    ],
+    parinfer: [
+      {
+        lineNo: 2,
+        newText: 'rst\nuvw\nxyz',
+        oldText: '',
+        x: 2
+      }
+    ]
+  },
+  {
+    description: 'multi-line delete',
+    diff: [
+      {
+        count: 9,
+        value: 'apple\nban'
+      },
+      {
+        count: 9,
+        removed: true,
+        value: 'ana\nstraw'
+      },
+      {
+        count: 6,
+        value: 'berry'
+      }
+    ],
+    parinfer: [
+      {
+        lineNo: 1,
+        newText: '',
+        oldText: 'ana\nstraw',
+        x: 3
+      }
+    ]
   }
 
   // FIXME: need more test cases here
-  // In particular: need multi-line
+  // In particular: need more multi-line and multi-edit examples
 ]
 
 function testDiffChanges () {

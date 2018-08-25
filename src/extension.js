@@ -107,11 +107,6 @@ function processEventsQueue () {
 const processQueueDebounceIntervalMs = 500
 const debouncedProcessEventsQueue = debounce(processEventsQueue, processQueueDebounceIntervalMs)
 
-// const diffOptions = {
-//   ignoreWhitespace: false,
-//   newlineIsToken: true
-// }
-
 function calculateChanges (oldTxt, newTxt) {
   const theDiff = diff.diffChars(oldTxt, newTxt)
 

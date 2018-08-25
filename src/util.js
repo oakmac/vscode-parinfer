@@ -217,8 +217,44 @@ function joinChanges (change1, change2) {
   }
 }
 
-function diffChangesToParinferChanges (changes) {
+function diffChangesToParinferChanges (diffChanges) {
+  let parinferChanges = []
+  let currentLineNo = 0
 
+  for (let i = 0; i < diffChanges.length; i++) {
+    const linesArr = diffChanges[i].value.split(LINE_ENDING_REGEX)
+    const numLines = linesArr.length
+    const lastLine = linesArr[numLines - 1]
+
+    currentLineNo = currentLineNo + numLines - 1
+    diffChanges[i].endLineNo = currentLineNo
+    diffChanges[i].endX = lastLine.length
+
+    let prevX = 0
+    let prevLineNo = 0
+    if (diffChanges[i - 1]) {
+      prevLineNo = diffChanges[i - 1].endLineNo
+      prevX = diffChanges[i - 1].endX
+    }
+
+    if (diffChanges[i].added) {
+      parinferChanges.push({
+        lineNo: prevLineNo,
+        newText: diffChanges[i].value,
+        oldText: '',
+        x: prevX
+      })
+    } else if (diffChanges[i].removed) {
+      parinferChanges.push({
+        lineNo: prevLineNo,
+        newText: '',
+        oldText: diffChanges[i].value,
+        x: prevX
+      })
+    }
+  }
+
+  return parinferChanges
 }
 
 function isRunState (state) {
