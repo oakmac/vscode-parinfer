@@ -1,38 +1,33 @@
 const vscode = require('vscode')
 const Position = vscode.Position
 const Selection = vscode.Selection
-
 const window = vscode.window
 const workspace = vscode.workspace
-
 const parinfer = require('parinfer')
-
 const parenTrailsModule = require('./parentrails')
 const updateParenTrails = parenTrailsModule.updateParenTrails
-
 const editorModule = require('./editor')
 const editorStates = editorModule.editorStates
-
 const util = require('./util')
-
 const messages = require('./messages')
 const parenModeFailedMsg = messages.parenModeFailedMsg
 const parenModeChangedFileMsg = messages.parenModeChangedFileMsg
-
 const config = require('./config')
+const state = require('./state')
 
 // -----------------------------------------------------------------------------
 // Parinfer Application
 // -----------------------------------------------------------------------------
 
+const undoOptions = {
+  undoStopAfter: false,
+  undoStopBefore: false
+}
+
 const logParinferInput = false
 const logParinferOutput = false
 
 function applyParinfer2 (editor, inputText, opts, mode) {
-  if (!opts) {
-    opts = {}
-  }
-
   if (logParinferInput) {
     console.log(inputText)
     console.log(opts)
@@ -45,6 +40,9 @@ function applyParinfer2 (editor, inputText, opts, mode) {
   else if (mode === 'SMART_MODE') result = parinfer.smartMode(inputText, opts)
   else if (mode === 'PAREN_MODE') result = parinfer.parenMode(inputText, opts)
 
+  console.assert(Number.isInteger(result.cursorLine), 'Parinfer result.cursorLine is not an integer')
+  console.assert(Number.isInteger(result.cursorX), 'Parinfer result.cursorX is not an integer')
+
   if (logParinferOutput) {
     console.log(result)
     console.log('~~~~~~~~~~~~~~~~ parinfer output ~~~~~~~~~~~~~~~~')
@@ -54,33 +52,42 @@ function applyParinfer2 (editor, inputText, opts, mode) {
   // FIXME: I think there are some cases where we can show an error here?
   if (!result.success) return
 
-  // if the text was unchanged, update the paren trails and exit
-  if (result.text === inputText) {
+  const didTextChange = result.text !== inputText
+
+  const isSelectionEmpty = editor.selection.isEmpty
+  const anchorPosition = editor.selection.anchor
+  const newCursorPosition = new Position(result.cursorLine, result.cursorX)
+  let newSelection = null
+  if (isSelectionEmpty) {
+    newSelection = new Selection(newCursorPosition, newCursorPosition)
+  } else {
+    newSelection = new Selection(anchorPosition, newCursorPosition)
+  }
+
+  // text unchanged: just update the paren trails
+  if (!didTextChange) {
+    state.prevTxt = result.text
     updateParenTrails(mode, editor, result.parenTrails)
-    return
+  // text changed
+  } else {
+    state.ignoreDocumentVersion = editor.document.version + 1
+    const editPromise = editor.edit(function (editBuilder) {
+      // NOTE: should this be delete + insert instead?
+      // https://github.com/Microsoft/vscode/issues/32058
+      editBuilder.replace(editorModule.getEditorRange(editor), result.text)
+    }, undoOptions)
+
+    // FYI - https://github.com/Microsoft/vscode/issues/16389
+    editPromise.then(function (editWasApplied) {
+      if (editWasApplied) {
+        editor.selection = newSelection
+        state.prevTxt = result.text
+        updateParenTrails(mode, editor, result.parenTrails)
+      } else {
+        // TODO: should we do something here if the edit fails?
+      }
+    })
   }
-
-  const undoOptions = {
-    undoStopAfter: false,
-    undoStopBefore: false
-  }
-
-  const editPromise = editor.edit(function (editBuilder) {
-    editBuilder.replace(editorModule.getEditorRange(editor), result.text)
-  }, undoOptions)
-
-  editPromise.then(function (editWasApplied) {
-    if (editWasApplied) {
-      // set the new cursor position
-      const newCursorPosition = new Position(result.cursorLine, result.cursorX)
-      const nextCursor = new Selection(newCursorPosition, newCursorPosition)
-      editor.selection = nextCursor
-
-      updateParenTrails(mode, editor, result.parenTrails)
-    } else {
-      // TODO: should we do something here if the edit fails?
-    }
-  })
 }
 
 function applyParinfer (editor, text, opts) {

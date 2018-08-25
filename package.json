@@ -75,13 +75,14 @@
     ]
   },
   "scripts": {
-    "test": "standard src/*.js"
+    "test": "standard && mocha"
   },
   "dependencies": {
+    "diff": "3.5.0",
     "parinfer": "3.12.0"
   },
   "devDependencies": {
+    "mocha": "5.2.0",
     "standard": "11.0.1"
   }
-
 }
