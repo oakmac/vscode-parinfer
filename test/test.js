@@ -157,3 +157,49 @@ function testJoinChanges () {
 }
 
 describe('joinChanges', testJoinChanges)
+
+// -----------------------------------------------------------------------------
+// diff changes
+// -----------------------------------------------------------------------------
+
+const diffExamples = [
+  {
+    description: 'basic insert',
+    diff: [
+      {
+        count: 4,
+        value: '(foo'
+      },
+      {
+        count: 3,
+        added: true,
+        value: 'bar'
+      },
+      {
+        count: 10,
+        value: ' [1 2 3])'
+      }
+    ],
+    parinfer: [
+      {
+        lineNo: 0,
+        newText: 'bar',
+        oldText: '',
+        x: 4
+      }
+    ]
+  }
+
+  // FIXME: need more test cases here
+  // In particular: need multi-line
+]
+
+function testDiffChanges () {
+  diffExamples.forEach(function (itm) {
+    it(itm.description, function () {
+      assert.deepStrictEqual(util.diffChangesToParinferChanges(itm.diff), itm.parinfer)
+    })
+  })
+}
+
+describe('diff changes', testDiffChanges)

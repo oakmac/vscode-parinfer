@@ -2,6 +2,7 @@
 // Requires
 // -----------------------------------------------------------------------------
 
+const diff = require('diff')
 const fs = require('fs')
 const vscode = require('vscode')
 const window = vscode.window
@@ -15,6 +16,7 @@ const config = require('./config')
 const path = require('path')
 const state = require('./state')
 const util = require('./util')
+const isString = util.isString
 const debounce = util.debounce
 
 // -----------------------------------------------------------------------------
@@ -32,6 +34,7 @@ const selectionChangeEvent = 'SELECTION_CHANGE'
 let eventsQueue = []
 let prevCursorLine = null
 let prevCursorX = null
+let prevTxt = null
 
 const logEventsQueue = false
 
@@ -45,13 +48,21 @@ function processEventsQueue () {
   // exit if we are not in Smart, Indent, or Paren mode
   if (!util.isRunState(editorMode)) return
 
-  const currentTxt = eventsQueue[0].txt
-
-  // cursor options
+  // create the Parinfer options object
   let options = {
     cursorLine: eventsQueue[0].cursorLine,
     cursorX: eventsQueue[0].cursorX
   }
+
+  // text + changes
+  const currentTxt = eventsQueue[0].txt
+  options.changes = null
+  // FIXME: I think we want to ignore the .changes object if the eventsQueue
+  // only contains selection changes?
+  if (isString(prevTxt) && currentTxt !== prevTxt) {
+    options.changes = calculateChanges(prevTxt, currentTxt)
+  }
+  prevTxt = currentTxt
 
   // previous cursor information
   options.prevCursorLine = prevCursorLine
@@ -60,27 +71,27 @@ function processEventsQueue () {
   prevCursorX = options.cursorX
 
   // grab the document changes
-  let changes = null
-  let i = eventsQueue.length - 1
-  while (i >= 0) {
-    if (eventsQueue[i] &&
-        eventsQueue[i].type === documentChangeEvent &&
-        eventsQueue[i].changes) {
-      if (!changes) {
-        changes = eventsQueue[i].changes
-      } else {
-        for (let j = 0; j < changes.length; j++) {
-          if (eventsQueue[i].changes[j]) {
-            changes[j] = util.joinChanges(changes[j], eventsQueue[i].changes[j])
-          }
-        }
-      }
-    }
-    i = i - 1
-  }
-  if (changes) {
-    options.changes = changes.map(changeToParinferFormat)
-  }
+  // let changes = null
+  // let i = eventsQueue.length - 1
+  // while (i >= 0) {
+  //   if (eventsQueue[i] &&
+  //       eventsQueue[i].type === documentChangeEvent &&
+  //       eventsQueue[i].changes) {
+  //     if (!changes) {
+  //       changes = eventsQueue[i].changes
+  //     } else {
+  //       for (let j = 0; j < changes.length; j++) {
+  //         if (eventsQueue[i].changes[j]) {
+  //           changes[j] = util.joinChanges(changes[j], eventsQueue[i].changes[j])
+  //         }
+  //       }
+  //     }
+  //   }
+  //   i = i - 1
+  // }
+  // if (changes) {
+  //   options.changes = changes.map(changeToParinferFormat)
+  // }
 
   if (logEventsQueue) {
     console.log(JSON.stringify(eventsQueue, null, 2))
@@ -93,8 +104,24 @@ function processEventsQueue () {
   parinfer2.applyParinfer(activeEditor, currentTxt, options)
 }
 
-const processQueueDebounceIntervalMs = 20
+const processQueueDebounceIntervalMs = 500
 const debouncedProcessEventsQueue = debounce(processEventsQueue, processQueueDebounceIntervalMs)
+
+// const diffOptions = {
+//   ignoreWhitespace: false,
+//   newlineIsToken: true
+// }
+
+function calculateChanges (oldTxt, newTxt) {
+  const theDiff = diff.diffChars(oldTxt, newTxt)
+
+  console.log(oldTxt)
+  console.log(newTxt)
+  console.log(theDiff)
+  console.log('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
+
+  return null
+}
 
 // -----------------------------------------------------------------------------
 // Change Editor State
@@ -131,41 +158,41 @@ editorStates.addWatch(onChangeEditorStates)
 function onChangeActiveEditor (editor) {
   // clear out the state when we switch the active editor
   eventsQueue.length = 0
-  state.ignoreNextEdit = false
+  state.ignoreDocumentVersion = null
+  state.ignoreNextSelectionChange = false
   prevCursorLine = null
   prevCursorX = null
+  prevTxt = null
 
   if (editor) {
     parinfer2.helloEditor(editor)
   }
 }
 
-// convert TextDocumentChangeEvent to the format parinfer expects
-function changeToParinferFormat (change) {
-  return {
-    lineNo: change.lineNo,
-    newText: change.text,
-    oldText: 'x'.repeat(change.changeLength),
-    x: change.x
-  }
-}
-
-// convert TextDocumentChangeEvent to a different format
-function convertChangeEvent (change) {
-  return {
-    changeLength: change.rangeLength,
-    lineNo: change.range.start.line,
-    text: change.text,
-    x: change.range.start.character
-  }
-}
+// // convert TextDocumentChangeEvent to the format parinfer expects
+// function changeToParinferFormat (change) {
+//   return {
+//     lineNo: change.lineNo,
+//     newText: change.text,
+//     oldText: 'x'.repeat(change.changeLength),
+//     x: change.x
+//   }
+// }
+//
+// // convert TextDocumentChangeEvent to a different format
+// function convertChangeEvent (change) {
+//   return {
+//     changeLength: change.rangeLength,
+//     lineNo: change.range.start.line,
+//     text: change.text,
+//     x: change.range.start.character
+//   }
+// }
 
 // this function fires any time a document's content is changed
 function onChangeTextDocument (evt) {
   // ignore edits that were made by Parinfer
-  if (state.ignoreNextEdit) {
-    console.log('ignored a document change event')
-    state.ignoreNextEdit = false
+  if (state.ignoreDocumentVersion === evt.document.version) {
     return
   }
 
@@ -178,7 +205,7 @@ function onChangeTextDocument (evt) {
   const activeEditor = window.activeTextEditor
   const theDocument = evt.document
   let parinferEvent = {
-    changes: evt.contentChanges.map(convertChangeEvent),
+    // changes: evt.contentChanges.map(convertChangeEvent),
     cursorLine: activeEditor.selections[0].active.line,
     cursorX: activeEditor.selections[0].active.character,
     documentVersion: theDocument.version,
@@ -195,12 +222,12 @@ function onChangeTextDocument (evt) {
 function onChangeSelection (evt) {
   // ignore selection changes that were made by Parinfer
   if (state.ignoreNextSelectionChange) {
-    console.log('ignored a selection change event')
+    // console.log('ignored a selection change event')
     state.ignoreNextSelectionChange = false
     return
   }
 
-  console.log('selection change event')
+  // console.log('selection change event')
   const editor = evt.textEditor
   const theDocument = editor.document
   const selection = evt.selections[0]

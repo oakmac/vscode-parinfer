@@ -217,6 +217,10 @@ function joinChanges (change1, change2) {
   }
 }
 
+function diffChangesToParinferChanges (changes) {
+
+}
+
 function isRunState (state) {
   return state === 'INDENT_MODE' ||
          state === 'SMART_MODE' ||
@@ -229,6 +233,7 @@ function isRunState (state) {
 
 exports.atom = atom
 exports.debounce = debounce
+exports.diffChangesToParinferChanges = diffChangesToParinferChanges
 exports.findEndRow = findEndRow
 exports.findStartRow = findStartRow
 exports.getTextFromRange = getTextFromRange

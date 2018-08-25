@@ -56,39 +56,40 @@ function applyParinfer2 (editor, inputText, opts, mode) {
   const hasTextChanged = result.text !== inputText
   const currentCursorLine = editor.selections[0].start.line
   const currentCursorX = editor.selections[0].start.character
-  const hasCursorChanged = !areCursorsEqual(currentCursorLine, currentCursorX,
-                                            result.cursorLine, result.cursorX)
-  const newCursorPosition = new Position(result.cursorLine, result.cursorX)
-  const nextCursor = new Selection(newCursorPosition, newCursorPosition)
 
-  // might be helpful:
-  // https://github.com/Microsoft/vscode/issues/16389
-  // https://github.com/Microsoft/vscode/issues/32058
+  let hasCursorChanged = false
+  let nextCursor = false
+  if (result.hasOwnProperty('cursorLine') && result.hasOwnProperty('cursorX')) {
+    hasCursorChanged = !areCursorsEqual(
+      currentCursorLine, currentCursorX, result.cursorLine, result.cursorX
+    )
+    const newCursorPosition = new Position(result.cursorLine, result.cursorX)
+    nextCursor = new Selection(newCursorPosition, newCursorPosition)
+  }
 
-  // text and cursor unchanged: update the paren trails
+  // text and cursor unchanged: just update the paren trails
   if (!hasTextChanged && !hasCursorChanged) {
-    console.log('no text change; no cursor change')
     updateParenTrails(mode, editor, result.parenTrails)
-  // text unchanged; cursor needs to be updated
+  // text unchanged, but cursor needs to be updated
   } else if (!hasTextChanged && hasCursorChanged) {
-    console.log('no text change; cursor update')
     editor.selection = nextCursor
     updateParenTrails(mode, editor, result.parenTrails)
   // text changed
   } else if (hasTextChanged) {
-    console.log('we are about to change the text')
-    state.ignoreNextEdit = true
+    state.ignoreDocumentVersion = editor.document.version + 1
     state.ignoreNextSelectionChange = true
-    const theWholeDocumentRange = editorModule.getEditorRange(editor)
     const editPromise = editor.edit(function (editBuilder) {
-      // editBuilder.delete(theWholeDocumentRange)
-      // editBuilder.insert(new Position(0, 0), result.text)
+      // NOTE: should this be delete + insert instead?
+      // https://github.com/Microsoft/vscode/issues/32058
       editBuilder.replace(editorModule.getEditorRange(editor), result.text)
     }, undoOptions)
 
+    // FYI - https://github.com/Microsoft/vscode/issues/16389
     editPromise.then(function (editWasApplied) {
       if (editWasApplied) {
-        editor.selection = nextCursor
+        if (nextCursor) {
+          editor.selection = nextCursor
+        }
         updateParenTrails(mode, editor, result.parenTrails)
       } else {
         // TODO: should we do something here if the edit fails?
