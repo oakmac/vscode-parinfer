@@ -34,7 +34,6 @@ const selectionChangeEvent = 'SELECTION_CHANGE'
 let eventsQueue = []
 let prevCursorLine = null
 let prevCursorX = null
-let prevTxt = null
 
 const logEventsQueue = false
 const logTextChange = false
@@ -57,18 +56,18 @@ function processEventsQueue () {
 
   // text + changes
   const currentTxt = eventsQueue[0].txt
-  const didTextChange = currentTxt !== prevTxt
+  const didTextChange = currentTxt !== state.prevTxt
 
   if (logTextChange && didTextChange) {
-    console.log(prevTxt)
+    console.log(state.prevTxt)
     console.log('+++')
     console.log(currentTxt)
     console.log('~~~~~~~~~~~~~~~~ prev / current text ~~~~~~~~~~~~~~~~')
   }
 
   options.changes = null
-  if (isString(prevTxt) && didTextChange) {
-    options.changes = calculateChanges(prevTxt, currentTxt)
+  if (isString(state.prevTxt) && didTextChange) {
+    options.changes = calculateChanges(state.prevTxt, currentTxt)
   }
 
   // previous cursor information
@@ -138,7 +137,7 @@ function onChangeActiveEditor (editor) {
   state.ignoreDocumentVersion = null
   prevCursorLine = null
   prevCursorX = null
-  prevTxt = editor.document.getText()
+  state.prevTxt = editor.document.getText()
 
   if (editor) {
     parinfer2.helloEditor(editor)
@@ -153,11 +152,8 @@ function onChangeTextDocument (evt) {
     return
   }
 
-  const theText = evt.document.getText()
-
   // ignore edits that were made by Parinfer
   if (state.ignoreDocumentVersion === evt.document.version) {
-    prevTxt = theText
     return
   }
 
@@ -166,7 +162,7 @@ function onChangeTextDocument (evt) {
     cursorLine: activeEditor.selection.active.line,
     cursorX: activeEditor.selection.active.character,
     documentVersion: evt.document.version,
-    txt: theText,
+    txt: evt.document.getText(),
     type: documentChangeEvent
   }
 

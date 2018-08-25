@@ -66,6 +66,7 @@ function applyParinfer2 (editor, inputText, opts, mode) {
 
   // text unchanged: just update the paren trails
   if (!didTextChange) {
+    state.prevTxt = result.text
     updateParenTrails(mode, editor, result.parenTrails)
   // text changed
   } else {
@@ -80,6 +81,7 @@ function applyParinfer2 (editor, inputText, opts, mode) {
     editPromise.then(function (editWasApplied) {
       if (editWasApplied) {
         editor.selection = newSelection
+        state.prevTxt = result.text
         updateParenTrails(mode, editor, result.parenTrails)
       } else {
         // TODO: should we do something here if the edit fails?
