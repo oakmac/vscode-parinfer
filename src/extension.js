@@ -37,6 +37,7 @@ let prevCursorX = null
 let prevTxt = null
 
 const logEventsQueue = false
+const logTextChange = false
 
 function processEventsQueue () {
   // do nothing if the queue is empty (this should never happen)
@@ -56,42 +57,25 @@ function processEventsQueue () {
 
   // text + changes
   const currentTxt = eventsQueue[0].txt
+  const didTextChange = currentTxt !== prevTxt
+
+  if (logTextChange && didTextChange) {
+    console.log(prevTxt)
+    console.log('+++')
+    console.log(currentTxt)
+    console.log('~~~~~~~~~~~~~~~~ prev / current text ~~~~~~~~~~~~~~~~')
+  }
+
   options.changes = null
-  // FIXME: I think we want to ignore the .changes object if the eventsQueue
-  // only contains selection changes?
-  if (isString(prevTxt) && currentTxt !== prevTxt) {
+  if (isString(prevTxt) && didTextChange) {
     options.changes = calculateChanges(prevTxt, currentTxt)
   }
-  prevTxt = currentTxt
 
   // previous cursor information
   options.prevCursorLine = prevCursorLine
   options.prevCursorX = prevCursorX
   prevCursorLine = options.cursorLine
   prevCursorX = options.cursorX
-
-  // grab the document changes
-  // let changes = null
-  // let i = eventsQueue.length - 1
-  // while (i >= 0) {
-  //   if (eventsQueue[i] &&
-  //       eventsQueue[i].type === documentChangeEvent &&
-  //       eventsQueue[i].changes) {
-  //     if (!changes) {
-  //       changes = eventsQueue[i].changes
-  //     } else {
-  //       for (let j = 0; j < changes.length; j++) {
-  //         if (eventsQueue[i].changes[j]) {
-  //           changes[j] = util.joinChanges(changes[j], eventsQueue[i].changes[j])
-  //         }
-  //       }
-  //     }
-  //   }
-  //   i = i - 1
-  // }
-  // if (changes) {
-  //   options.changes = changes.map(changeToParinferFormat)
-  // }
 
   if (logEventsQueue) {
     console.log(JSON.stringify(eventsQueue, null, 2))
@@ -104,18 +88,12 @@ function processEventsQueue () {
   parinfer2.applyParinfer(activeEditor, currentTxt, options)
 }
 
-const processQueueDebounceIntervalMs = 500
+const processQueueDebounceIntervalMs = 20
 const debouncedProcessEventsQueue = debounce(processEventsQueue, processQueueDebounceIntervalMs)
 
 function calculateChanges (oldTxt, newTxt) {
   const theDiff = diff.diffChars(oldTxt, newTxt)
-
-  console.log(oldTxt)
-  console.log(newTxt)
-  console.log(theDiff)
-  console.log('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
-
-  return null
+  return util.diffChangesToParinferChanges(theDiff)
 }
 
 // -----------------------------------------------------------------------------
@@ -134,7 +112,11 @@ function onChangeEditorStates (states) {
     statusBar.updateStatusBar(currentEditorState)
     if (util.isRunState(currentEditorState)) {
       const txt = activeEditor.document.getText()
-      parinfer2.applyParinfer(activeEditor, txt, {})
+      const options = {
+        cursorLine: activeEditor.selection.active.line,
+        cursorX: activeEditor.selection.active.character
+      }
+      parinfer2.applyParinfer(activeEditor, txt, options)
     } else {
       clearParenTrailDecorators(activeEditor)
     }
@@ -154,57 +136,37 @@ function onChangeActiveEditor (editor) {
   // clear out the state when we switch the active editor
   eventsQueue.length = 0
   state.ignoreDocumentVersion = null
-  state.ignoreNextSelectionChange = false
   prevCursorLine = null
   prevCursorX = null
-  prevTxt = null
+  prevTxt = editor.document.getText()
 
   if (editor) {
     parinfer2.helloEditor(editor)
   }
 }
 
-// // convert TextDocumentChangeEvent to the format parinfer expects
-// function changeToParinferFormat (change) {
-//   return {
-//     lineNo: change.lineNo,
-//     newText: change.text,
-//     oldText: 'x'.repeat(change.changeLength),
-//     x: change.x
-//   }
-// }
-//
-// // convert TextDocumentChangeEvent to a different format
-// function convertChangeEvent (change) {
-//   return {
-//     changeLength: change.rangeLength,
-//     lineNo: change.range.start.line,
-//     text: change.text,
-//     x: change.range.start.character
-//   }
-// }
-
 // this function fires any time a document's content is changed
 function onChangeTextDocument (evt) {
-  // ignore edits that were made by Parinfer
-  if (state.ignoreDocumentVersion === evt.document.version) {
-    return
-  }
-
   // drop any events that do not contain document changes
   // NOTE: this is usually the first change to a document and anytime the user presses "save"
   if (evt.contentChanges && evt.contentChanges.length === 0) {
     return
   }
 
+  const theText = evt.document.getText()
+
+  // ignore edits that were made by Parinfer
+  if (state.ignoreDocumentVersion === evt.document.version) {
+    prevTxt = theText
+    return
+  }
+
   const activeEditor = window.activeTextEditor
-  const theDocument = evt.document
   let parinferEvent = {
-    // changes: evt.contentChanges.map(convertChangeEvent),
-    cursorLine: activeEditor.selections[0].active.line,
-    cursorX: activeEditor.selections[0].active.character,
-    documentVersion: theDocument.version,
-    txt: theDocument.getText(),
+    cursorLine: activeEditor.selection.active.line,
+    cursorX: activeEditor.selection.active.character,
+    documentVersion: evt.document.version,
+    txt: theText,
     type: documentChangeEvent
   }
 
@@ -215,22 +177,14 @@ function onChangeTextDocument (evt) {
 
 // this function fires any time a cursor's position changes (ie: often)
 function onChangeSelection (evt) {
-  // ignore selection changes that were made by Parinfer
-  if (state.ignoreNextSelectionChange) {
-    // console.log('ignored a selection change event')
-    state.ignoreNextSelectionChange = false
-    return
-  }
+  // TODO: ignore events that were not made by a mouse or keyboard?
 
-  // console.log('selection change event')
   const editor = evt.textEditor
-  const theDocument = editor.document
-  const selection = evt.selections[0]
   const parinferEvent = {
-    cursorLine: selection.active.line,
-    cursorX: selection.active.character,
-    documentVersion: theDocument.version,
-    txt: theDocument.getText(),
+    cursorLine: editor.selection.active.line,
+    cursorX: editor.selection.active.character,
+    documentVersion: editor.document.version,
+    txt: editor.document.getText(),
     type: selectionChangeEvent
   }
 

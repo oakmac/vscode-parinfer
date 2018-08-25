@@ -1,3 +1,2 @@
-// some shared state among modules
+// state that is shared between modules
 exports.ignoreDocumentVersion = null
-exports.ignoreNextSelectionChange = false

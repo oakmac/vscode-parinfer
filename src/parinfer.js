@@ -19,19 +19,15 @@ const state = require('./state')
 // Parinfer Application
 // -----------------------------------------------------------------------------
 
-const logParinferInput = false
-const logParinferOutput = false
-
 const undoOptions = {
   undoStopAfter: false,
   undoStopBefore: false
 }
 
-function applyParinfer2 (editor, inputText, opts, mode) {
-  if (!opts) {
-    opts = {}
-  }
+const logParinferInput = false
+const logParinferOutput = false
 
+function applyParinfer2 (editor, inputText, opts, mode) {
   if (logParinferInput) {
     console.log(inputText)
     console.log(opts)
@@ -44,6 +40,9 @@ function applyParinfer2 (editor, inputText, opts, mode) {
   else if (mode === 'SMART_MODE') result = parinfer.smartMode(inputText, opts)
   else if (mode === 'PAREN_MODE') result = parinfer.parenMode(inputText, opts)
 
+  console.assert(Number.isInteger(result.cursorLine), 'Parinfer result.cursorLine is not an integer')
+  console.assert(Number.isInteger(result.cursorX), 'Parinfer result.cursorX is not an integer')
+
   if (logParinferOutput) {
     console.log(result)
     console.log('~~~~~~~~~~~~~~~~ parinfer output ~~~~~~~~~~~~~~~~')
@@ -54,30 +53,23 @@ function applyParinfer2 (editor, inputText, opts, mode) {
   if (!result.success) return
 
   const hasTextChanged = result.text !== inputText
-  const currentCursorLine = editor.selections[0].start.line
-  const currentCursorX = editor.selections[0].start.character
 
-  let hasCursorChanged = false
-  let nextCursor = false
-  if (result.hasOwnProperty('cursorLine') && result.hasOwnProperty('cursorX')) {
-    hasCursorChanged = !areCursorsEqual(
-      currentCursorLine, currentCursorX, result.cursorLine, result.cursorX
-    )
-    const newCursorPosition = new Position(result.cursorLine, result.cursorX)
-    nextCursor = new Selection(newCursorPosition, newCursorPosition)
+  const isSelectionEmpty = editor.selection.isEmpty
+  const anchorPosition = editor.selection.anchor
+  const newCursorPosition = new Position(result.cursorLine, result.cursorX)
+  let newSelection = null
+  if (isSelectionEmpty) {
+    newSelection = new Selection(newCursorPosition, newCursorPosition)
+  } else {
+    newSelection = new Selection(anchorPosition, newCursorPosition)
   }
 
-  // text and cursor unchanged: just update the paren trails
-  if (!hasTextChanged && !hasCursorChanged) {
-    updateParenTrails(mode, editor, result.parenTrails)
-  // text unchanged, but cursor needs to be updated
-  } else if (!hasTextChanged && hasCursorChanged) {
-    editor.selection = nextCursor
+  // text unchanged: just update the paren trails
+  if (!hasTextChanged) {
     updateParenTrails(mode, editor, result.parenTrails)
   // text changed
-  } else if (hasTextChanged) {
+  } else {
     state.ignoreDocumentVersion = editor.document.version + 1
-    state.ignoreNextSelectionChange = true
     const editPromise = editor.edit(function (editBuilder) {
       // NOTE: should this be delete + insert instead?
       // https://github.com/Microsoft/vscode/issues/32058
@@ -87,22 +79,13 @@ function applyParinfer2 (editor, inputText, opts, mode) {
     // FYI - https://github.com/Microsoft/vscode/issues/16389
     editPromise.then(function (editWasApplied) {
       if (editWasApplied) {
-        if (nextCursor) {
-          editor.selection = nextCursor
-        }
+        editor.selection = newSelection
         updateParenTrails(mode, editor, result.parenTrails)
       } else {
         // TODO: should we do something here if the edit fails?
       }
     })
   }
-}
-
-function areCursorsEqual (oldCursorLine, oldCursorX, newCursorLine, newCursorX) {
-  return Number.isInteger(newCursorLine) &&
-         Number.isInteger(newCursorX) &&
-         oldCursorLine === newCursorLine &&
-         oldCursorX === newCursorX
 }
 
 function applyParinfer (editor, text, opts) {
