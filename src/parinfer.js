@@ -52,7 +52,7 @@ function applyParinfer2 (editor, inputText, opts, mode) {
   // FIXME: I think there are some cases where we can show an error here?
   if (!result.success) return
 
-  const hasTextChanged = result.text !== inputText
+  const didTextChange = result.text !== inputText
 
   const isSelectionEmpty = editor.selection.isEmpty
   const anchorPosition = editor.selection.anchor
@@ -65,7 +65,7 @@ function applyParinfer2 (editor, inputText, opts, mode) {
   }
 
   // text unchanged: just update the paren trails
-  if (!hasTextChanged) {
+  if (!didTextChange) {
     updateParenTrails(mode, editor, result.parenTrails)
   // text changed
   } else {
