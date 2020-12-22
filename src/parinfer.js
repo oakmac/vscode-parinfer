@@ -144,7 +144,8 @@ function helloEditor (editor) {
     editor.document.languageId === 'clojure' ||
     editor.document.languageId === 'scheme' ||
     editor.document.languageId === 'lisp' ||
-    editor.document.languageId === 'racket'
+    editor.document.languageId === 'racket' ||
+    editor.document.languageId === 'fennel'
   )
 
   editorStates.update(function (states) {
