@@ -21,7 +21,8 @@
     "onLanguage:lisp",
     "onLanguage:scheme",
     "onLanguage:racket",
-    "onLanguage:extempore"
+    "onLanguage:extempore",
+    "onLanguage:fennel"
   ],
   "contributes": {
     "configuration": {
